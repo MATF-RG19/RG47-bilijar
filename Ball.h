@@ -1,4 +1,5 @@
 #include "Vec2.h"
+#include <GL/glut.h>
 
 #ifndef BALL_H
 #define BALL_H
@@ -9,6 +10,8 @@ class Ball{
         //Vektori koji predstavljaju poziciju u brzinu    
         Vec2 position;
         Vec2 velocity;
+
+        bool onTable;
 
         //RGB kod boje
         double r;
@@ -23,6 +26,7 @@ class Ball{
             this->r = r;
             this->g = g;
             this->b = b;
+            this->onTable = true;
         }
 
     public:

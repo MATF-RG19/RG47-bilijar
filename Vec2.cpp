@@ -53,9 +53,10 @@ void Vec2::anull(){
     mult(0);
 }
 
-
 string Vec2::toString(){
     return "(" + to_string(x) + ", " + to_string(y) + ")";
 }
+
+
 
 

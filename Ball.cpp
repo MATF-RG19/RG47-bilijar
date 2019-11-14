@@ -1,5 +1,5 @@
 #include "Ball.h"
-
+#include <GL/glut.h>
 Ball::Ball(){}
 
 Ball::Ball(Vec2 position){
@@ -41,6 +41,17 @@ string Ball::toString(){
 
 
 void Ball::drawSelf(){
+    //Prilikom crtanja lopte pretpostavljamo da je koordinati sistem vec transliran uvis.
+    //Razlog je izbegavanje velikog broja pozivanja funkcije glPushMatrix() zato sto ce se lopte crtati u petlji
+    //TheGame ce eventualno imati metodu za crtanje svih kugli u kojoj ce pozivati upravo ovu metodu za svaku kuglu pa ce
+    //translacija biti uradjena tu.
+
+    //Jos jedan razlog je neko postovanje OOP principa (ne treba lopta da zna kolko je sto visok)
+    glColor3f(r, g, b);
+
+    glTranslated(position.x, position.y, 0);
+    glutSolidSphere(1, 50, 50);
+    glTranslated(-position.x, -position.y, 0);
 
 }
 
