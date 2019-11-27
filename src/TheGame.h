@@ -35,7 +35,7 @@ class TheGame{
 
         //Visina stola kao i odnos duzina/sirina su konstantne vrednosti
         static constexpr double tableRatio = 0.5;
-        static const int tableHeight = 20;
+        static const int tableHeight = 73;
 
         //Racuna relevantne koordinate ivice stola. Koristice se u detekciji kolizija sa ivicama.
         double tableEdgeUp;
@@ -43,6 +43,8 @@ class TheGame{
         double tableEdgeLeft;
         double tableEdgeRight;
 
+        double tableTopHeight;
+        double tableBottomHeight;
 
         //Oznacava da li se igrac trenutno nalazi u rezimu udarca kugle ili ne.
         //Ukoliko se nalazi u rezimu udarca, koordinate "oka" kamere bice sferne koordinate bele kugle a ne sfere oko stola
@@ -61,6 +63,20 @@ class TheGame{
 
         //Jacina udarca, bice implementirano kada pocnem animaciju
         double shotStrength;
+
+        //Utility metoda za crtanje kvadra
+        void customCube(double X, double Y, double Z, double length, double width, double height){
+            glPushMatrix();
+                double h2 = height/2;
+                X += h2;
+                Y += h2;
+                Z += h2;
+                glTranslated(X, Y, Z);
+                glScaled(width, length, height);
+                glutSolidCube(1);
+
+            glPopMatrix();
+        }
 
         
 
@@ -83,6 +99,13 @@ class TheGame{
         
         //Vrlo privremena metoda. Cisto radi estetske provere.
         void testBalls();
+
+        static void timerCallBack(int);
+
+        string utilGetBits(unsigned int);
+
+        //Pre nego sto uvedem ciljanje sa nivoa stola, za testiranje kao vektor pravca udarca koristim pravac vektora pogleda ka centru stola.
+        Vec2 getViewDirection();
         
         
 

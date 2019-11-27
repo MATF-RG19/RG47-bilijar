@@ -29,6 +29,9 @@ class Vec2{
         void mult(double);
         Vec2 r_mult(double);
 
+        void normalize();
+        Vec2 r_normalize();
+
         double dot(Vec2 v);
 
         /* Vraca kvadriranu normu (magnitudu) vektora. Pogodno za koriscenje ukoliko je potrebno uporedjivati neke udaljenosti. U tim slucajevima nije potrebno trositi vreme na racunanje korena */
@@ -41,6 +44,8 @@ class Vec2{
         void anull();
 
         string toString();
+
+        
 
 };
 #endif

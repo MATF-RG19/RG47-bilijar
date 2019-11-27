@@ -7,9 +7,13 @@ class Ball{
 
     private:
 
+        static const unsigned int bitCheck = pow(2, 16) - 1;
+
         //Vektori koji predstavljaju poziciju u brzinu    
         Vec2 position;
         Vec2 velocity;
+
+        double radius;
 
         bool onTable;
 
@@ -18,22 +22,28 @@ class Ball{
         double g;
         double b;
 
+        unsigned int bitMask;
 
         //Pomocna metoda za inicijalizaciju
-        void setAll(Vec2 pos, Vec2 vel, double r, double g, double b){
+        void setAll(Vec2 pos, Vec2 vel, double radius, double r, double g, double b, int i){
+            counter++;
             this->position = pos;
             this->velocity = vel;
             this->r = r;
             this->g = g;
             this->b = b;
             this->onTable = true;
+            this->radius = radius;
+            moving = (vel.mag() > 0);
         }
 
+        bool moving;
     public:
         Ball();
-        Ball(Vec2);
-        Ball(Vec2, Vec2);
-        Ball(Vec2, Vec2, double, double, double);
+        Ball(int);
+        Ball(Vec2, int);
+        Ball(Vec2, Vec2, int);
+        Ball(Vec2, Vec2, double, double, double, double, int);
 
         //Getteri i setteri
         Vec2 getPosition();
@@ -49,6 +59,14 @@ class Ball{
         void collideWith(Ball);    
 
         string toString(); 
+
+        static int counter;
+
+        bool isActive();
+
+        bool getMoving();
+
+        
 };
 
 #endif

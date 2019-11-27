@@ -15,6 +15,7 @@ void Vec2::add(Vec2 v){
     this->y += v.y;
 }
 
+
 Vec2 Vec2::r_add(Vec2 v){
     return Vec2(this->x + v.x, this->y + v.y);
 }
@@ -57,6 +58,20 @@ string Vec2::toString(){
     return "(" + to_string(x) + ", " + to_string(y) + ")";
 }
 
+void Vec2::normalize(){
+    double mg = mag();
+    if (mg != 0){
+        this->mult(1/mg);
+    }
+}
+
+Vec2 Vec2::r_normalize(){
+    Vec2 v = Vec2(x, y);
+    v.normalize();
+
+    return v;
+    
+}
 
 
 
