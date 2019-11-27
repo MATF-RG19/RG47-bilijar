@@ -1,10 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <time.h>
 #include <GL/glut.h>
 
 #include "Vec2.h"
 #include "Ball.h"
+
+#define REDRRAW_BALLS (0)
+#define REDRRAW_BALLS_INTERVAL (5)
 
 
 #define TABLEOFF1 (2)
@@ -34,6 +38,8 @@ double tableEdgeUp;
 double tableEdgeDown;
 double tableEdgeLeft;
 double tableEdgeRight;
+
+double ballLimUp, ballLimDown, ballLimLeft, ballLimRight;
 
 double tableTopHeight;
 double tableBottomHeight;
@@ -68,11 +74,19 @@ void directCamera();
 void testBalls();
 void drawCoord();
 void mainTimerCallBack(int);
+bool anyBallsMoving();
+void initBalls();
+void drawBalls();
 Vec2 getViewDirection();
+
+
+int cnt = 0;
+
+time_t thetime;
 
 int main(int argc, char ** argv){
     initAll(233);
-    
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
@@ -96,6 +110,7 @@ int main(int argc, char ** argv){
 
 
 static void on_display(){
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
@@ -105,18 +120,38 @@ static void on_display(){
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     
-    directCamera();   ///usmeravanje kamere
+    directCamera();   //usmeravanje kamere
     drawTable();      //crtanje stola
-    testBalls();      //test iscrtavanja kugli, privremeno
+    drawCoord();      //crtanje koordinatnog sistema
 
-    drawCoord();        //crtanje koordinatnog sistema
+    drawBalls();
     
-
     glutSwapBuffers();
 }
 
 void mainTimerCallBack(int arg){
-
+    switch (arg){
+        
+        case REDRRAW_BALLS:
+            time_t newtime = time(NULL);
+            //cout << "DT: " << (newtime - thetime) << "ms" << endl;
+            //cout << "new: " << (double)newtime << ", old: " << (double)thetime << endl;
+            thetime = newtime;
+    
+            
+            for (Ball & b: balls){
+                b.cushionCollide(ballLimUp, ballLimDown, ballLimLeft, ballLimRight);
+                b.updateSelf();
+            }
+            
+            glutPostRedisplay();
+            if(anyBallsMoving()){
+                glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, arg);
+            }else{
+                cout << "DONEEEEEEEEEEEEEEEEEEEEEEEE" << endl;
+            }
+            break;
+    }
 }
 
 static void on_reshape(int x, int y){
@@ -169,15 +204,17 @@ static void on_keyboard(unsigned char c,int x, int y){
             cout << "S: " << shotStrength << endl;
             break;
         case 'h':
+            thetime = time(NULL);
+
             Vec2 shotDir = getViewDirection();
+            shotDir.normalize();
             shotDir.mult(shotStrength);
 
-            //glutTimerFunc(20, timerCallBack, 0);
+            cout << "made vec: " << shotDir.toString() << endl;
 
+            balls[0].setVelocity(shotDir);
+            glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, REDRRAW_BALLS);
             break;
-
-
-
     }
 }
 
@@ -212,27 +249,19 @@ void drawTable(){
 void directCamera(){
     //Usmeravanje kamere na osnovu sfernih koordinata 
     //Centar sfere nije centar koordinatnog sistema vec centar stola, koji ima koordinate (0, 0, tableHeight). Zbog toga se tableHeight dodaje na poslednju koordinatu.
+    lookingFromX = camR*cos(camTheta)*sin(camRho);
+    lookingFromY = camR*sin(camTheta)*sin(camRho);
+    lookingFromZ = camR*cos(camRho) + tableHeight;
+
+    lookingAtX = 0;
+    lookingAtY = 0;
+    lookingAtZ = 0;
+    
     gluLookAt(
-        camR*cos(camTheta)*sin(camRho), camR*sin(camTheta)*sin(camRho), camR*cos(camRho) + tableHeight,
+        lookingFromX, lookingFromY, lookingFromZ,
         0, 0, 0,
         0, 0, 1
     );
-}
-
-//Privremeno
-void testBalls(){
-    Ball b =  Ball(Vec2(0, 2*tableEdgeUp/3), Vec2(0, 0),ballRadius, 1, 0, 0, 0);
-    Ball b1 = Ball(Vec2(0, 0), Vec2(0, 0), ballRadius, 0, 0, 1, 1);
-    Ball b2 = Ball(Vec2(0, 2*tableEdgeDown/3), Vec2(0, 0), ballRadius, 1, 0, 1, 2);
-
-    glPushMatrix();
-        glTranslated(0, 0, tableHeight + ballRadius);
-        b.drawSelf();
-        b1.drawSelf();
-        b2.drawSelf();
-    glPopMatrix();
-
-    glutPostRedisplay();
 }
 
 //Funkcija koja crta koordinatni sistem, sluzi kao pomoc pri debagovanju.
@@ -276,6 +305,7 @@ Vec2 getViewDirection(){
     Vec2 v(lookingAtX - lookingFromX, lookingAtY - lookingFromY);
     v.normalize();
 
+
     return v;
 }
 
@@ -284,12 +314,20 @@ void initAll(double tl){
     
     tableLength = tl;
     tableWidth = tableLength * tableRatio;
-
     
     tableEdgeUp = tableLength/2;
     tableEdgeDown = - tableEdgeUp;
     tableEdgeRight = tableWidth/2;
     tableEdgeLeft = -tableEdgeRight;
+
+    ballLimUp = tableEdgeUp - ballRadius;
+    ballLimDown = tableEdgeDown - ballRadius;
+    ballLimLeft = tableEdgeLeft - ballRadius;
+    ballLimRight = tableEdgeRight - ballRadius;
+
+/*     cout << "\t" << ballLimUp << endl;
+    cout << ballLimLeft <<  "\t\t" << ballLimRight << endl;
+    cout << "\t" << ballLimDown << endl; */
     
     //Pocetna pozicija kamere
     camR = tableLength;
@@ -300,4 +338,33 @@ void initAll(double tl){
 
     //Odnos izracunat na osnovu realnih mera
     ballRadius = tableLength * 0.02182285/2;
+
+    initBalls();
 }
+
+bool anyBallsMoving(){
+    for(Ball b: balls){
+
+        if (b.getMoving()) return true;
+        
+
+    }
+    return false;
+}
+
+void initBalls(){
+    balls.push_back(Ball(Vec2(0, 2*tableEdgeUp/3), Vec2(0, 0),ballRadius, 1, 0, 0, 0));
+    balls.push_back(Ball(Vec2(0, 0), Vec2(0, 0), ballRadius, 0, 0, 1, 1));
+    balls.push_back(Ball(Vec2(0, 2*tableEdgeDown/3), Vec2(0, 0), ballRadius, 1, 0, 1, 2));
+}
+
+void drawBalls(){
+    glTranslated(0, 0,tableHeight + ballRadius);
+    for(Ball b: balls){   
+        b.drawSelf();
+    }
+    glTranslated(0, 0, - tableHeight - ballRadius);
+}
+
+
+

@@ -32,6 +32,9 @@ class Vec2{
         void normalize();
         Vec2 r_normalize();
 
+        void flipX();
+        void flipY();
+
         double dot(Vec2 v);
 
         /* Vraca kvadriranu normu (magnitudu) vektora. Pogodno za koriscenje ukoliko je potrebno uporedjivati neke udaljenosti. U tim slucajevima nije potrebno trositi vreme na racunanje korena */

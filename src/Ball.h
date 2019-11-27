@@ -7,6 +7,8 @@ class Ball{
 
     private:
 
+        int stupidCounter;
+        int stupidIndex;
         static const unsigned int bitCheck = pow(2, 16) - 1;
 
         //Vektori koji predstavljaju poziciju u brzinu    
@@ -35,6 +37,8 @@ class Ball{
             this->onTable = true;
             this->radius = radius;
             moving = (vel.mag() > 0);
+            stupidCounter = 0;
+            stupidIndex = i;
         }
 
         bool moving;
@@ -54,6 +58,7 @@ class Ball{
 
         //Metoda koja iscrtava loptu na sceni
         void drawSelf();
+        void updateSelf();
 
         //Metoda koja regulise koliziju sa drugom loptom
         void collideWith(Ball);    
@@ -65,6 +70,8 @@ class Ball{
         bool isActive();
 
         bool getMoving();
+
+        void cushionCollide(double, double, double, double);
 
         
 };

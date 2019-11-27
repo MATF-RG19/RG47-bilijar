@@ -1,5 +1,10 @@
 #include "Ball.h"
 #include <GL/glut.h>
+
+//Ovi makroi predstavljaju cistu ljudsku lenjost
+#define X (position.x)
+#define Y (position.y)
+
 Ball::Ball(){}
 
 //void setAll(Vec2 pos, Vec2 vel, double radius, double r, double g, double b, int i){
@@ -35,6 +40,9 @@ Vec2 Ball::getVelocity(){
 
 void Ball::setVelocity(Vec2 velocity){
     this->velocity = velocity;
+    if (velocity.squaredMag() != 0) {
+        moving = true;
+    }
 }
 
 string Ball::toString(){
@@ -73,3 +81,36 @@ bool Ball::isActive(){
 bool Ball::getMoving(){
     return moving;
 }
+
+void Ball::updateSelf(){
+    double ckmag = this->velocity.squaredMag();
+    if (ckmag == 0) return;
+    this->position.add(this->velocity);
+    //this->velocity.mult(0.98);
+
+    //cout << "[" << stupidCounter << "]" << "Changing vel from " << velocity.toString();
+    this->velocity.mult(0.99);
+    //cout << "to " << velocity.toString();
+    stupidCounter++;
+    //cout << ", and setting stupidCounter to " << stupidCounter << endl;
+    if (this->velocity.squaredMag() < 0.01){
+        this->velocity.anull();
+        this->moving = false;
+    }
+}
+
+
+void Ball::cushionCollide(double limUp, double limDown, double limLeft, double limRight){
+    
+    if (Y > limUp || Y < limDown) {
+        
+        velocity.flipY();
+    }
+
+    if (X > limRight || X < limLeft) {
+        //cout << "X OFF because pos: " << X << ", " << Y << " and v = " << velocity.toString();
+        velocity.flipX();
+        //cout << ", now v = " << velocity.toString() << endl;
+    }
+
+}   

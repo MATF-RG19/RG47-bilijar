@@ -54,6 +54,14 @@ void Vec2::anull(){
     mult(0);
 }
 
+void Vec2::flipX(){
+    this->x *= -1;
+}
+
+void Vec2::flipY(){
+    this->y *= -1;
+}
+
 string Vec2::toString(){
     return "(" + to_string(x) + ", " + to_string(y) + ")";
 }
