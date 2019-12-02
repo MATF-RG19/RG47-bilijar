@@ -3,6 +3,9 @@
 #include <math.h>
 #include <time.h>
 #include <GL/glut.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 
 #include "Vec2.h"
 #include "Ball.h"
@@ -14,7 +17,6 @@
 #define REDRRAW_BALLS_INTERVAL (5)
 
 #define BALLS_MODE (1)
-
 
 #define TABLEOFF1 (2)
 #define TABLEOFF2 (4)
@@ -36,12 +38,15 @@ double deltaRho;
 
 
 
-bool hasCamMoved = false;
+bool hasCamMoved = false;   //budalastina, vraticu se na ovo
 
 double tableLength;         //Dimenzije stola
 double tableWidth;
 double ballRadius;     
 double holeRadius;     
+
+double elA;
+double elB;
 
 //Visina stola kao i odnos duzina/sirina su konstantne vrednosti
 static constexpr double tableRatio = 0.5;
@@ -96,7 +101,6 @@ bool anyBallsMoving();
 void initBalls();
 void drawBalls();
 void fillCluster();
-void drawCircle(double);
 Vec2 getViewDirection();
 
 
@@ -121,7 +125,8 @@ time_t thetime;
 time_t displayTime;
 
 int main(int argc, char ** argv){
-    
+
+    cout << "PID: " << getpid() << endl;    
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
@@ -177,7 +182,7 @@ static void on_display(){
     directCamera();
     //if(hasCamMoved){
         drawTable();      
-        drawCoord();      
+        //drawCoord();      
         //hasCamMoved = false;
     //}
         
@@ -240,27 +245,31 @@ static void on_keyboard(unsigned char c,int x, int y){
         case 27:
             exit(1);
             break;
+        case 'A':
         case 'a':
             camTheta -= .02;
             glutPostRedisplay();
             break;
+        case 'D':
         case 'd':
             camTheta += .02;
             glutPostRedisplay();
             break;
+        case 'W':
         case 'w':
             if(withinBounds(&camRho, RhoLimit)){
                 camRho -= .02;
             }
             glutPostRedisplay();
             break;
+        case 'S':
         case 's':
             if(withinBounds(&camRho, RhoLimit)){
                 camRho += .02;
             }
             glutPostRedisplay();
             break;
-
+        case 'I':
         case 'i':
             //camR -= .5;
             if(withinBounds(&camR, Rlimit)){
@@ -268,7 +277,7 @@ static void on_keyboard(unsigned char c,int x, int y){
             }
             glutPostRedisplay();
             break;
-
+        case 'K':
         case 'k':
             //camR += .5;
             if(withinBounds(&camR, Rlimit)){
@@ -285,9 +294,11 @@ static void on_keyboard(unsigned char c,int x, int y){
             shotStrength += -.1;
             cout << "S: " << shotStrength << endl;
             break;
+        case 'N':
         case 'n':
             fillCluster();
             break;
+        case 'H':
         case 'h':
             if (shotStrength > 2){
                 enableSafe = true;
@@ -328,13 +339,16 @@ void drawTable(){
     glMaterialfv(GL_FRONT, GL_AMBIENT, hole_ambient_material);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, hole_diffuse_material);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, hole_specular_material);
+
     //Drawing holes
     glPushMatrix();
         glTranslated(0, 0, tableHeight+0.1);
         glPushMatrix();
             glTranslated(tableEdgeLeft, tableEdgeUp, 0);
+            //glRotated(45, 0, 0, 1);
             glColor3f(0, 0, 0);
             drawCircle(holeRadius);
+            //drawEllipse(elA, elB, 0, M_PI);
         glPopMatrix();
         glPushMatrix();
             glTranslated(tableEdgeLeft, tableEdgeDown, 0);
@@ -490,7 +504,11 @@ void initAll(double tl){
     tableEdgeLeft = -tableEdgeRight;
 
     ballRadius = tableLength * 0.02182285/2;
-    holeRadius = 2*ballRadius;
+    holeRadius = 3*ballRadius;
+
+    elA = 3*ballRadius;
+    elB = 4*ballRadius;
+
     ballLimUp = tableEdgeUp - ballRadius;
     ballLimDown = tableEdgeDown + ballRadius;
     ballLimLeft = tableEdgeLeft + ballRadius;
@@ -581,15 +599,4 @@ void fillCluster(){
 
 }
 
-void drawCircle(double radius){
-    double t = 0;
-    while(t < 2*M_PI){
-        glBegin(GL_TRIANGLE_STRIP);
-            glVertex2f(0, 0);
-            glVertex2f(radius*cos(t), radius*sin(t));
-            glVertex2f(radius*cos(t + 0.2), radius*sin(t + 0.2));
-        glBegin(GL_TRIANGLE_STRIP);
-        t += 0.2;
-    }
-    glEnd();
-}
+

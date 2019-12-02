@@ -1,4 +1,6 @@
 #include "putils.h"
+#include <GL/glut.h>
+#include <math.h>
 
 #include <iostream>
 using namespace std;
@@ -12,4 +14,30 @@ bool withinBounds(double * x, double * bounds){
         return false;
     }
     return true;
+}
+
+
+void drawCircle(double radius){
+    double t = 0;
+    while(t < 2*M_PI){
+        glBegin(GL_TRIANGLE_STRIP);
+            glVertex2f(0, 0);
+            glVertex2f(radius*cos(t), radius*sin(t));
+            glVertex2f(radius*cos(t + 0.2), radius*sin(t + 0.2));
+        glBegin(GL_TRIANGLE_STRIP);
+        t += 0.2;
+    }
+    glEnd();
+}
+
+void drawEllipse(double a, double b, double t_from, double t_to){
+    double deltaT = 0.2;
+    while(t_from < t_to){
+        glBegin(GL_TRIANGLE_STRIP);
+            glVertex2f(0, 0);
+            glVertex2f(a*cos(t_from), b*sin(t_from));
+            glVertex2f(a*cos(t_from + deltaT), b*sin(t_from + deltaT));
+        glEnd();
+        t_from += deltaT;
+    }
 }
