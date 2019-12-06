@@ -44,13 +44,7 @@ class Ball{
 
             bmaskTurnOn = 1 << (i);
             bmaskTurnOff = bmaskTurnOn ^ (-1);
-            //cout << "Index " << i << ": " << endl;
-            //bitset<32>bis(bmaskTurnOn);
-            //bitset<32>bis2(bmaskTurnOff);
-            //cout << "\tON: " << bis << endl;
-            //cout << "\tOF: " << bis2 << endl;
         }
-
         
     public:
         Ball();
@@ -68,7 +62,7 @@ class Ball{
 
         //Metoda koja iscrtava loptu na sceni
         void drawSelf();
-        void updateSelf(bool *, unsigned int *);
+        void updateSelf(unsigned int *);
 
         //Metoda koja regulise koliziju sa drugom loptom
         void collideWith(Ball &);    
@@ -85,7 +79,14 @@ class Ball{
 
         void setMoving(bool);
 
+        unsigned int getBitMaskTurnOn();
+
         void printBitMask();
+
+        bool getOnTable();
+        bool setOnTable(bool);
+
+        
         
 };
 

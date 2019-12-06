@@ -16,6 +16,10 @@ bool withinBounds(double * x, double * bounds){
     return true;
 }
 
+bool withinBoundsSimple(double x, double * bounds){
+    return (x >= bounds[0] && x <= bounds[1]);
+}
+
 
 void drawCircle(double radius){
     double t = 0;

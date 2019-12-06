@@ -79,53 +79,53 @@ void Ball::drawSelf(){
 }
 
 void Ball::collideWith(Ball & b){
-            Vec2 NormalVector = this->position.r_sub(b.position); //NON - NORMALIZED VECTOR THAT CONNECTS THE TWO CENTERS
-            double ballRadius = b.radius;
-            double NormalVectorMag = NormalVector.mag();
-            if(NormalVectorMag > 2*ballRadius){ 
-                return;
-            }
+    Vec2 NormalVector = this->position.r_sub(b.position); //NON - NORMALIZED VECTOR THAT CONNECTS THE TWO CENTERS
+    double ballRadius = b.radius;
+    double NormalVectorMag = NormalVector.mag();
+    if(NormalVectorMag > 2*ballRadius){ 
+        return;
+    }
 
-            if(NormalVectorMag < 2*ballRadius){
-                //The Balls are intersecting which needs to be fixed.
-                double intersectionDepth = 2*ballRadius - NormalVectorMag; //The depth of intersection
-                //Ball 1 must move BACK (in the -1 direction) across the normal vector with the intensity of the intersection depth
-                Vec2 correctionVector = NormalVector.r_normalize();
-                correctionVector.mult(intersectionDepth/2);
-                this->position.add(correctionVector);
+    if(NormalVectorMag < 2*ballRadius){
+        //The Balls are intersecting which needs to be fixed.
+        double intersectionDepth = 2*ballRadius - NormalVectorMag; //The depth of intersection
+        //Ball 1 must move BACK (in the -1 direction) across the normal vector with the intensity of the intersection depth
+        Vec2 correctionVector = NormalVector.r_normalize();
+        correctionVector.mult(intersectionDepth/2);
+        this->position.add(correctionVector);
 
-                
-                b.position.sub(correctionVector);
-                
-                //cout << "NVM: " << NormalVector.mag() << ", 2ballrad: " << 2*ballRadius << endl;
-            }
-            
-            NormalVector = this->position.r_sub(b.position);
-            //cout << "AFTER ALL: MAG: " << NormalVector.mag() << ", RAD: " << 2*ballRadius << endl;
-            NormalVector.normalize();
-            Vec2 TangentVector = Vec2(-NormalVector.y, NormalVector.x);
-            
-            //Project velocities onto normal and tangent vectors
+        
+        b.position.sub(correctionVector);
+        
+        //cout << "NVM: " << NormalVector.mag() << ", 2ballrad: " << 2*ballRadius << endl;
+    }
+    
+    NormalVector = this->position.r_sub(b.position);
+    //cout << "AFTER ALL: MAG: " << NormalVector.mag() << ", RAD: " << 2*ballRadius << endl;
+    NormalVector.normalize();
+    Vec2 TangentVector = Vec2(-NormalVector.y, NormalVector.x);
+    
+    //Project velocities onto normal and tangent vectors
 
-            double ball1NormalIntensity = this->velocity.dot(NormalVector); //this will be the intensity in the normal direction of ball 1
-            double ball1TangentIntensity = this->velocity.dot(TangentVector);
+    double ball1NormalIntensity = this->velocity.dot(NormalVector); //this will be the intensity in the normal direction of ball 1
+    double ball1TangentIntensity = this->velocity.dot(TangentVector);
 
-            double ball2NormalIntensity = b.velocity.dot(NormalVector); //this will be the intensity in the normal direction of ball 2
-            double ball2TangentIntensity = b.velocity.dot(TangentVector);
+    double ball2NormalIntensity = b.velocity.dot(NormalVector); //this will be the intensity in the normal direction of ball 2
+    double ball2TangentIntensity = b.velocity.dot(TangentVector);
 
-            double ball1NormalPower = ball2NormalIntensity;
-            double ball2NormalPower = ball1NormalIntensity;
+    double ball1NormalPower = ball2NormalIntensity;
+    double ball2NormalPower = ball1NormalIntensity;
 
-            Vec2 ball1NormalComponent = NormalVector.r_mult(ball1NormalPower);
-            Vec2 ball1TangentComponent = TangentVector.r_mult(ball1TangentIntensity);
+    Vec2 ball1NormalComponent = NormalVector.r_mult(ball1NormalPower);
+    Vec2 ball1TangentComponent = TangentVector.r_mult(ball1TangentIntensity);
 
-            Vec2 ball2NormalComponent = NormalVector.r_mult(ball2NormalPower);
-            Vec2 ball2TangentComponent = TangentVector.r_mult(ball2TangentIntensity);
+    Vec2 ball2NormalComponent = NormalVector.r_mult(ball2NormalPower);
+    Vec2 ball2TangentComponent = TangentVector.r_mult(ball2TangentIntensity);
 
-            ball1NormalComponent.add(ball1TangentComponent);
-            this->velocity = ball1NormalComponent;
-            ball2NormalComponent.add(ball2TangentComponent);
-            b.velocity = ball2NormalComponent;
+    ball1NormalComponent.add(ball1TangentComponent);
+    this->velocity = ball1NormalComponent;
+    ball2NormalComponent.add(ball2TangentComponent);
+    b.velocity = ball2NormalComponent;
 
             
 }
@@ -135,7 +135,7 @@ bool Ball::getMoving(){
     return (this->velocity.squaredMag() != 0);
 }
 
-void Ball::updateSelf(bool * issafe, unsigned int * activity){
+void Ball::updateSelf(unsigned int * activity){
     double ckmag = this->velocity.squaredMag();
     if (ckmag == 0) return;
     this->position.add(this->velocity);
@@ -150,7 +150,6 @@ void Ball::updateSelf(bool * issafe, unsigned int * activity){
         *activity = *activity | bmaskTurnOn;
     }
     
-    *issafe = (ckmag < 2*this->radius);
 }
 
 
@@ -199,4 +198,15 @@ void Ball::printBitMask(){
 
     cout << "Ball " << stupidIndex << ": " << bis << endl; */
     
+}
+
+unsigned int Ball::getBitMaskTurnOn(){
+    return bmaskTurnOn;
+}
+
+bool Ball::getOnTable(){
+    return onTable;
+}
+bool Ball::setOnTable(bool b){
+    this->onTable = b;
 }
