@@ -73,7 +73,7 @@ void Ball::drawSelf(){
 
     glColor3f(r, g, b);
     glTranslated(position.x, position.y, 0);
-    glutSolidSphere(radius, 100, 100);
+    glutSolidSphere(radius, 50, 50);
     glTranslated(-position.x, -position.y, 0);
 
 }

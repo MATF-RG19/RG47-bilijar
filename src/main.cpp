@@ -21,6 +21,13 @@
 #define TABLEOFF1 (2)
 #define TABLEOFF2 (4)
 
+#define GAMEMODE (1)
+
+#define NINETY_DEGREES (1.5708)
+#define FOURTY_FIVE_DEGREES (0.785398)
+#define TWENTY_DEGREES (0.349066)
+#define FIVE_DEGREES (0.0872665)
+
 using namespace std;
 
 vector<Ball> balls;         //Niz koji ce sadrzati kugle
@@ -35,8 +42,6 @@ double RhoLimit[2];
 double deltaR;              //Predstavljaju promenu svake od sfernih koordinata iliti "osetljivost" kamere.
 double deltaTheta;          //Bice izracunato na osnovu dimenzija stola. Za sad se koriste fiksne vrednosti.
 double deltaRho;
-
-
 
 bool hasCamMoved = false;   //budalastina, vraticu se na ovo
 
@@ -71,7 +76,7 @@ int testMod = 0;
 bool enableSafe = true;
 //Oznacava da li se igrac trenutno nalazi u rezimu udarca kugle ili ne.
 //Ukoliko se nalazi u rezimu udarca, koordinate "oka" kamere bice sferne koordinate bele kugle a ne sfere oko stola
-bool inShotMode;
+bool inShotMode = false;
 
 double lookingAtX;  
 double lookingAtY;
@@ -84,6 +89,7 @@ double lookingFromZ;
 
 //Jacina udarca, bice implementirano kada pocnem animaciju
 double shotStrength;
+bool fineTune;
 
 //Standardne funkcije
 static void on_display(void);
@@ -101,13 +107,17 @@ bool anyBallsMoving();
 void initBalls();
 void drawBalls();
 void fillCluster();
+void drawAim();
 Vec2 getViewDirection();
+
+void setStandardLimitsAndVals();
+void setShotModeLimitsAndVals();
 
 
 GLfloat table_ambient_material[] = { 0, 1, 0, 1 };
-GLfloat table_diffuse_material[] = { 0.4,0.9,0.09 };
-GLfloat table_specular_material[] = { 1, 1, 1, 1 };
-GLfloat table_shininess = 10;
+GLfloat table_diffuse_material[] = { 1,1,1 };
+GLfloat table_specular_material[] = { 0, 0, 0, 1 };
+GLfloat table_shininess = 2;
 
 GLfloat hole_ambient_material[] = { 0, 0, 0, 1 };
 GLfloat hole_diffuse_material[] = { 1,1,1 };
@@ -118,11 +128,21 @@ GLfloat base_diffuse_material[] = { 0.48,0.46,0.4,1};
 GLfloat base_specular_material[] = { 1, 0, 0, 1 };
 GLfloat base_shininess = 10;
 
+GLfloat light_position[] = { 0, 0, 2*tableHeight, 0};
+GLfloat ambient_light[] = { 1, 1, 1, 1 };
+GLfloat diffuse_light[] = { 0.7, 0.7, 0.7, 1 };
+GLfloat specular_light[] = { 0.9, 0.9, 0.9, 1 };
+
+GLfloat trans_ambient_material[] = { 0.48,0.46,0.4,0.2 };
+GLfloat trans_diffuse_material[] = { 0.48,0.46,0.4,0.2};
+GLfloat trans_specular_material[] = { 1, 0, 0, 0.2 };
 
 int cnt = 0;
 
 time_t thetime;
 time_t displayTime;
+
+Vec2 cbp;
 
 int main(int argc, char ** argv){
 
@@ -131,12 +151,14 @@ int main(int argc, char ** argv){
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
-    glutGet(GLUT_SCREEN_HEIGHT);
-    glutGet(GLUT_SCREEN_WIDTH);
     glutInitWindowSize(1000, 1000);
     glutInitWindowPosition(200, 200);
     glutCreateWindow(argv[0]);
 
+    
+    //BILIJAR:
+    //initAll(233);
+    //SNUKER:
     initAll(233);
     glutDisplayFunc(on_display);
     glutReshapeFunc(on_reshape);
@@ -153,9 +175,8 @@ int main(int argc, char ** argv){
     return 0;
 }
 
-
+//EVENT FUNCTIONS:
 static void on_display(){
-    //cout << "redisplaying..." << endl;
     time_t ctime = time(NULL);
     
     displayTime = ctime;
@@ -166,36 +187,22 @@ static void on_display(){
     gluPerspective(60, 1, 1, 800); //Dalji clipping-plane je za sada vrlo daleko zbog cestih promena dimenzija objekata radi testiranja. Bice racunat na osnovu dimenzija
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
     
-    GLfloat light_position[] = { 0, 0, 20*tableHeight, 0};
-	GLfloat ambient_light[] = { 1, 1, 1, 1 };
-	GLfloat diffuse_light[] = { 0.7, 0.7, 0.7, 1 };
-	GLfloat specular_light[] = { 0.9, 0.9, 0.9, 1 };
     glEnable(GL_LIGHT0);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
 
-    
+    glLoadIdentity();
     directCamera();
-    //if(hasCamMoved){
-        drawTable();      
-        //drawCoord();      
-        //hasCamMoved = false;
-    //}
-        
-
+    drawTable();      
     drawBalls();
-
-    
-   
-
+    //drawCoord();
+    if(inShotMode) drawAim();
 
     glutSwapBuffers();
 }
-
 void mainTimerCallBack(int arg){
     switch (arg){
         
@@ -234,12 +241,9 @@ void mainTimerCallBack(int arg){
             break;
     }
 }
-
 static void on_reshape(int x, int y){
     glutPostRedisplay();
 }
-
-
 static void on_keyboard(unsigned char c,int x, int y){
     switch (c){
         case 27:
@@ -247,18 +251,21 @@ static void on_keyboard(unsigned char c,int x, int y){
             break;
         case 'A':
         case 'a':
-            camTheta -= .02;
+            camTheta -= deltaTheta;
             glutPostRedisplay();
             break;
         case 'D':
         case 'd':
-            camTheta += .02;
+            camTheta += deltaTheta;
             glutPostRedisplay();
             break;
         case 'W':
         case 'w':
             if(withinBounds(&camRho, RhoLimit)){
                 camRho -= .02;
+                //cout << "RHO: " << camRho << endl;
+            }else{
+                //cout << "Cant go past " << camRho << endl;
             }
             glutPostRedisplay();
             break;
@@ -266,6 +273,9 @@ static void on_keyboard(unsigned char c,int x, int y){
         case 's':
             if(withinBounds(&camRho, RhoLimit)){
                 camRho += .02;
+                //cout << "RHO: " << camRho << endl;
+            }else{
+                //cout << "Cant go past " << camRho << endl;
             }
             glutPostRedisplay();
             break;
@@ -282,6 +292,7 @@ static void on_keyboard(unsigned char c,int x, int y){
             //camR += .5;
             if(withinBounds(&camR, Rlimit)){
                 camR += ballRadius;
+                //cout << "(r = " << camR << ", theta = " << camTheta << ", rho = " << camRho << ")" << endl; 
             }
             glutPostRedisplay();
             
@@ -298,12 +309,44 @@ static void on_keyboard(unsigned char c,int x, int y){
         case 'n':
             fillCluster();
             break;
+
+        case 'x':
+        case 'X':
+            if(!inShotMode){
+                inShotMode = true;
+                setShotModeLimitsAndVals();
+            }else{
+                inShotMode = false;
+                setStandardLimitsAndVals();
+            }
+            glutPostRedisplay();
+            break;
+        case 'f':
+        case 'F':
+            if(fineTune){
+                fineTune = false;
+                deltaTheta = .02;
+                cout << "FINE TUNE OFF" << endl;
+            }else{
+                fineTune = true;
+                deltaTheta = .002;
+                cout << "FINE TUNE ON" << endl;
+            }
+            break;
         case 'H':
         case 'h':
+            if(!inShotMode) break;
+            if(anyBallsMoving()) break;
+            
+            inShotMode = false;
+
+            setStandardLimitsAndVals();
+
+
             if (shotStrength > 2){
                 enableSafe = true;
             }
-            if(anyBallsMoving()) break;
+
             thetime = time(NULL);
 
             Vec2 shotDir = getViewDirection();
@@ -317,7 +360,44 @@ static void on_keyboard(unsigned char c,int x, int y){
     }
 }
 
-//Iscrtavanje stola
+//DRAW FUNCTIONS:
+void directCamera(){
+    //Usmeravanje kamere na osnovu sfernih koordinata 
+    //Centar sfere nije centar koordinatnog sistema vec centar stola, koji ima koordinate (0, 0, tableHeight). Zbog toga se tableHeight dodaje na poslednju koordinatu.
+    glLoadIdentity();
+    Vec2 ps = balls[0].getPosition();
+    //glTranslated(0, 0, tableHeight);
+    if(inShotMode){
+        lookingFromX = camR*cos(camTheta)*sin(camRho) + ps.x;
+        lookingFromY = camR*sin(camTheta)*sin(camRho) + ps.y;
+        lookingFromZ = camR*cos(camRho) + tableHeight;
+        lookingAtX = ps.x;
+        lookingAtY = ps.y;
+        lookingAtZ = tableHeight;
+        gluLookAt(
+            lookingFromX, lookingFromY, lookingFromZ,
+            lookingAtX, lookingAtY, lookingAtZ,
+            0, 0, 1
+        );
+        
+    }else{
+        lookingFromX = camR*cos(camTheta)*sin(camRho);
+        lookingFromY = camR*sin(camTheta)*sin(camRho);
+        lookingFromZ = camR*cos(camRho) + tableHeight;
+        lookingAtX = 0;
+        lookingAtY = 0;
+        lookingAtZ = tableHeight;
+        gluLookAt (
+            lookingFromX, lookingFromY, lookingFromZ,
+            lookingAtX, lookingAtY, lookingAtZ,
+            0, 0, 1
+        );   
+    }
+    
+
+  
+    //glTranslated(0, 0, -tableHeight);
+}
 void drawTable(){
     
 	glMaterialfv(GL_FRONT, GL_AMBIENT, table_ambient_material);
@@ -328,12 +408,7 @@ void drawTable(){
     glPushMatrix();
         glTranslated(0, 0, tableHeight - TABLEOFF1); //Translacija na odgovarajucu visinu
         glScaled(tableWidth, tableLength, TABLEOFF2); //Skaliranje po dimenzijama
-            
-        glColor3f(0.0, 1.0, 0);
-        glutSolidCube(1);
-
-        glColor3f(0, 0, 0);
-        glutWireCube(1);        
+        glutSolidCube(1);     
     glPopMatrix();
     
     glMaterialfv(GL_FRONT, GL_AMBIENT, hole_ambient_material);
@@ -346,7 +421,6 @@ void drawTable(){
         glPushMatrix();
             glTranslated(tableEdgeLeft, tableEdgeUp, 0);
             //glRotated(45, 0, 0, 1);
-            glColor3f(0, 0, 0);
             drawCircle(holeRadius);
             //drawEllipse(elA, elB, 0, M_PI);
         glPopMatrix();
@@ -421,79 +495,61 @@ void drawTable(){
         glutSolidCube(1);
         glColor3f(0, 0, 0);
         glutWireCube(1);
-    glPopMatrix();
-
-    
-
-    
+    glPopMatrix(); 
 }
-
-//Usmerava kameru na osnovu sfernih parametara
-void directCamera(){
-    //Usmeravanje kamere na osnovu sfernih koordinata 
-    //Centar sfere nije centar koordinatnog sistema vec centar stola, koji ima koordinate (0, 0, tableHeight). Zbog toga se tableHeight dodaje na poslednju koordinatu.
-    lookingFromX = camR*cos(camTheta)*sin(camRho);
-    lookingFromY = camR*sin(camTheta)*sin(camRho);
-    lookingFromZ = camR*cos(camRho) + tableHeight;
-
-    lookingAtX = 0;
-    lookingAtY = 0;
-    lookingAtZ = 0;
-    
-    gluLookAt(
-        lookingFromX, lookingFromY, lookingFromZ,
-        0, 0, 0,
-        0, 0, 1
-    );
+void drawBalls(){
+    glTranslated(0, 0,tableHeight + ballRadius);
+    for(Ball b: balls){   
+        b.drawSelf();
+    }
+    glTranslated(0, 0, - tableHeight - ballRadius);
 }
-
-//Funkcija koja crta koordinatni sistem, sluzi kao pomoc pri debagovanju.
+void drawAim(){
+    cbp = balls[0].getPosition();
+    glLineWidth(5);
+    glColor3f(0.839215686, 0.28627451, 1);
+    glBegin(GL_LINES);
+        glVertex3f(cbp.x, cbp.y, tableHeight+1);
+        glVertex3f(cbp.x + (lookingAtX - lookingFromX)*5,cbp.y +  (lookingAtY - lookingFromY)*5, tableHeight + 1);
+    glEnd();
+}
 void drawCoord(){
     glLineWidth(1);
     glColor3f(0, 0, 1.0);
     //X AXIS IS BLUE
     glBegin(GL_LINES);
         glVertex3f(0, 0, 0);
-        glVertex3f(300.0, 0, 0);
+        glVertex3f(1000.0, 0, 0);
     glEnd();
     glBegin(GL_LINES);
         glVertex3f(0, 0, 0);
-        glVertex3f(-300.0, 0, 0);
+        glVertex3f(-1000.0, 0, 0);
     glEnd();
     glColor3f(0, 1.0, 0);
     //Y AXIS IS GREEN
     glBegin(GL_LINES);
         glVertex3f(0, 0, 0);
-        glVertex3f(0, 300.0, 0);
+        glVertex3f(0, 1000.0, 0);
     glEnd();
     glBegin(GL_LINES);
         glVertex3f(0, 0, 0);
-        glVertex3f(0, -300.0, 0);
+        glVertex3f(0, -1000.0, 0);
     glEnd();
 
     glColor3f(1.0, 0, 0);
     //Z AXIS IS RED
     glBegin(GL_LINES);
         glVertex3f(0, 0, 0);
-        glVertex3f(0, 0, 300.0);
+        glVertex3f(0, 0, 1000.0);
     glEnd();
     glBegin(GL_LINES);
         glVertex3f(0, 0, 0);
-        glVertex3f(0, 0, -300.0);
+        glVertex3f(0, 0, -1000.0);
     glEnd();
 }
 
-//Vraca vektor pogleda
-Vec2 getViewDirection(){
-    Vec2 v(lookingAtX - lookingFromX, lookingAtY - lookingFromY);
-    v.normalize();
-
-
-    return v;
-}
-
-//Inicijalizacija svega
-void initAll(double tl){
+//INITIALIZING FUNCTIONS: 
+void initAll(double tl){--
     
     tableLength = tl;
     tableWidth = tableLength * tableRatio;
@@ -503,8 +559,11 @@ void initAll(double tl){
     tableEdgeRight = tableWidth/2;
     tableEdgeLeft = -tableEdgeRight;
 
+    //BILIJAR:
     ballRadius = tableLength * 0.02182285/2;
-    holeRadius = 3*ballRadius;
+    //SNUKER:
+    /* ballRadius = tableLength * 0.007293693;
+    */holeRadius = 2*ballRadius; 
 
     elA = 3*ballRadius;
     elB = 4*ballRadius;
@@ -521,10 +580,13 @@ void initAll(double tl){
 
     Rlimit[0] = ballRadius;
     Rlimit[1] = 2*tableLength;
-    RhoLimit[0] = 0.349066; //20-ak stepeni
-    RhoLimit[1] = 1.5708;
+    RhoLimit[0] = TWENTY_DEGREES; //20-ak stepeni
+    RhoLimit[1] = NINETY_DEGREES; //90 stepeni
+    //Theta je neogranicen, moze da se okrece kolko oces
 
-    
+    //SKACI VAMO
+    deltaTheta = .02;
+    fineTune = false;
     
     shotStrength = 0;
 
@@ -536,29 +598,12 @@ void initAll(double tl){
     }
     
 }
-
-bool anyBallsMoving(){
-    for(Ball b: balls){
-        if (b.getMoving()) return true;
-    }
-    return false;
-}
-
 void initBalls(){
     balls.empty();
     balls.push_back(Ball(Vec2(0, 2*tableEdgeUp/3), Vec2(0, 0),ballRadius, 1, 0, 0, 0));
     balls.push_back(Ball(Vec2(0, 0), Vec2(0, 0), ballRadius, 0, 0, 1, 1));
     balls.push_back(Ball(Vec2(0, 2*tableEdgeDown/3), Vec2(0, 0), ballRadius, 1, 0, 1, 2));
 }
-
-void drawBalls(){
-    glTranslated(0, 0,tableHeight + ballRadius);
-    for(Ball b: balls){   
-        b.drawSelf();
-    }
-    glTranslated(0, 0, - tableHeight - ballRadius);
-}
-
 void fillCluster(){
     balls.clear();
     balls.push_back(Ball(Vec2(0, tableEdgeDown/2), Vec2(0, 0), ballRadius, 1, 1, 1, 0));
@@ -598,5 +643,37 @@ void fillCluster(){
     glutPostRedisplay();
 
 }
+
+//MISC FUNCTIONS:
+bool anyBallsMoving(){
+    for(Ball b: balls){
+        if (b.getMoving()) return true;
+    }
+    return false;
+}
+Vec2 getViewDirection(){
+    Vec2 v(lookingAtX - lookingFromX, lookingAtY - lookingFromY);
+    v.normalize();
+
+
+    return v;
+}
+void setStandardLimitsAndVals(){
+    camRho = FOURTY_FIVE_DEGREES;
+    camR = tableLength;
+    Rlimit[0] = ballRadius;
+    Rlimit[1] = 2*tableLength;
+    RhoLimit[0] = TWENTY_DEGREES;
+    RhoLimit[1] = NINETY_DEGREES;
+}
+void setShotModeLimitsAndVals(){
+    camRho = NINETY_DEGREES - TWENTY_DEGREES;
+    camR = 16*ballRadius;
+    Rlimit[0] = ballRadius;
+    Rlimit[1] = 16*ballRadius;
+    RhoLimit[0] = FOURTY_FIVE_DEGREES;
+    RhoLimit[1] = NINETY_DEGREES - FIVE_DEGREES;
+}
+
 
 
