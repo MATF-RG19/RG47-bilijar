@@ -567,11 +567,6 @@ void fillCluster(){
         currentY += dy;
 
     }
-
-    for(Ball b: balls){
-        b.printBitMask();
-    }
-
     glutPostRedisplay();
 
 }

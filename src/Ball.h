@@ -10,9 +10,6 @@ class Ball{
 
     private:
 
-        int stupidCounter;
-        int stupidIndex;
-
         //Vektori koji predstavljaju poziciju u brzinu    
         Vec2 position;
         Vec2 velocity;
@@ -30,7 +27,6 @@ class Ball{
         unsigned int bmaskTurnOff;
         //Pomocna metoda za inicijalizaciju
         void setAll(Vec2 pos, Vec2 vel, double radius, GLfloat r, GLfloat g, GLfloat b, int i){
-            counter++;
             this->position = pos;
             this->velocity = vel;
             this->r = r;
@@ -39,9 +35,6 @@ class Ball{
             this->onTable = true;
             this->radius = radius;
             
-            stupidCounter = 0;
-            stupidIndex = i;
-
             bmaskTurnOn = 1 << (i);
             bmaskTurnOff = bmaskTurnOn ^ (-1);
         }
@@ -70,12 +63,10 @@ class Ball{
         
 
         string toString(); 
-        static int counter;
         bool isActive();
         bool getMoving();
         void setMoving(bool);
         unsigned int getBitMaskTurnOn();
-        void printBitMask();
         bool getOnTable();
         bool setOnTable(bool);
 

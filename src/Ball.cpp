@@ -50,11 +50,6 @@ string Ball::toString(){
     return this->position.toString();
 }
 
-
-int Ball::counter = 0;
-
-
-
 void Ball::drawSelf(){
     //Prilikom crtanja lopte pretpostavljamo da je koordinati sistem vec transliran uvis.
     //Razlog je izbegavanje velikog broja pozivanja funkcije glPushMatrix() zato sto ce se lopte crtati u petlji
@@ -184,25 +179,6 @@ void Ball::cushionCollide(double limUp, double limDown, double limLeft, double l
 
 
 }   
-
-void Ball::printBitMask(){
-    /* unsigned int n = bmaskTurnOn;
-    string bis = "";
-    while(n != 0){
-        bis += (n % 2 == 0)?"0":"1";
-        n /= 2;
-    }
-
-    for(int i = 0, j = bis.size() - 1; i < j; i++, j--){
-        char tmp = bis[i];
-        bis[i] = bis[j];
-        bis[j] = tmp;
-    }
-
-    cout << "Ball " << stupidIndex << ": " << bis << endl; */
-    
-}
-
 unsigned int Ball::getBitMaskTurnOn(){
     return bmaskTurnOn;
 }
@@ -237,7 +213,8 @@ bool Ball::holeCollide(double limUp, double limDown, double limLeft, double limR
         cout << "POT bottom left" << endl;
         return true;
     }
-    if(circleDrop(limRight, limUp, holeRadius, position.x, position.y)){
+    if(circleDrop(limRight, limDown, holeRadius, position.x, position.y)){
+        cout << "POT bottom right" << endl;
         return true;
     }
 
@@ -250,6 +227,8 @@ bool Ball::holeCollide(double limUp, double limDown, double limLeft, double limR
         cout << "POT mid right" << endl;
         return true;
     }
+
+    return false;
 }
 
 void Ball::dieCompletely(unsigned int * act){
