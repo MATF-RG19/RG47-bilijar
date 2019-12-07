@@ -16,7 +16,10 @@
 | **K**   | Zoom out        |
 | **+**   | Uvecanje snage udarca        |
 | **-**   | Smanjenje snage udarca        |
-| **h**   | Udarac        |
+| **X**   | Rezim udarca        |
+| **F**   | "Fine tune" rezim        |
+| **H**   | Udarac        |
+
 
 <hr>
 

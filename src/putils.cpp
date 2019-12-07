@@ -1,4 +1,5 @@
 #include "putils.h"
+#include "Vec2.h"
 #include <GL/glut.h>
 #include <math.h>
 
@@ -44,4 +45,12 @@ void drawEllipse(double a, double b, double t_from, double t_to){
         glEnd();
         t_from += deltaT;
     }
+}
+
+bool circleDrop(double bigX, double bigY, double bigRadius, double smallX, double smallY){
+    Vec2 distVec = Vec2(bigX - smallX, bigY - smallY);
+    double nrm = distVec.mag();
+    //cout << "Distance from ball " << smallX << ", " << smallY << " and hole " << bigX << ", " << bigY << " is " << nrm << endl;
+
+    return nrm <= bigRadius;
 }

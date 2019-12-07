@@ -9,7 +9,7 @@
     #define TABLEOFF1 (2)
     #define TABLEOFF2 (4)
 
-    #define GAMEMODE (0)
+    #define GAMEMODE (1)
 
     #define NINETY_DEGREES (1.5708)
     #define FOURTY_FIVE_DEGREES (0.785398)

@@ -60,31 +60,27 @@ class Ball{
         Vec2 getVelocity();
         void setVelocity(Vec2);
 
-        //Metoda koja iscrtava loptu na sceni
+        //Pametne metode:
         void drawSelf();
         void updateSelf(unsigned int *);
-
-        //Metoda koja regulise koliziju sa drugom loptom
+        void cushionCollide(double, double, double, double);
         void collideWith(Ball &);    
+        bool holeCollide(double limUp, double limDown, double limLeft, double limRight, double holeRadius);
+        
+        
 
         string toString(); 
-
         static int counter;
-
         bool isActive();
-
         bool getMoving();
-
-        void cushionCollide(double, double, double, double);
-
         void setMoving(bool);
-
         unsigned int getBitMaskTurnOn();
-
         void printBitMask();
-
         bool getOnTable();
         bool setOnTable(bool);
+
+        void dieCompletely(unsigned int *);
+
 
         
         

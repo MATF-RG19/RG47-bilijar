@@ -112,6 +112,9 @@ int main(int argc, char ** argv){
 
 //EVENT FUNCTIONS:
 static void on_display(){
+/*     Vec2 cbp = balls[0].getPosition();
+    cout << "Cueball: " << cbp.x << ", " << cbp.y << endl;
+    cout << "Topleft: " << tableEdgeUp << ", " << tableEdgeLeft << endl; */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
@@ -140,6 +143,10 @@ void mainTimerCallBack(int arg){
         case REDRRAW_BALLS:
             for (int i = 0; i < balls.size(); i++){
                 if(balls[i].getOnTable() && balls[i].getMoving()){
+                    if (balls[i].holeCollide(tableEdgeUp, tableEdgeDown, tableEdgeLeft, tableEdgeRight, holeRadius)){
+                        balls[i].dieCompletely(&activityCheck);
+                        continue;
+                    }
                     balls[i].cushionCollide(ballLimUp, ballLimDown, ballLimLeft, ballLimRight);
                     for(int j = 0; j < balls.size(); j++){
                         if(i == j || !balls[j].getOnTable()){
@@ -262,7 +269,6 @@ static void on_keyboard(unsigned char c,int x, int y){
             if(fineTune) toggleFineTune();
 
             Vec2 shotDir = getViewDirection();
-            shotDir.normalize();
             shotDir.mult(shotStrength*ballRadius);
 
             balls[0].setVelocity(shotDir);
@@ -349,6 +355,18 @@ void drawTable(){
         glPopMatrix();
     glPopMatrix();
 
+    /* glBegin(GL_POLYGON);
+        glVertex3f(tableEdgeLeft + holeRadius, tableEdgeUp + TABLEOFF2, tableHeight + TABLEOFF2);
+        glVertex3f(tableEdgeLeft + holeRadius*HOLE_TOLERANCE/2, tableEdgeUp + TABLEOFF2, tableHeight + TABLEOFF2);
+        //glVertex3f(tableEdgeLeft + holeRadius, tableEdgeUp, tableHeight + TABLEOFF2); 
+        //glVertex3f(0, 0, tableHeight + TABLEOFF2);
+        glVertex3f(tableEdgeLeft + holeRadius*HOLE_TOLERANCE/2, tableEdgeUp, tableHeight + TABLEOFF2);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+
+    glEnd(); */
+
     //Drawing rails...
     glPushMatrix();
         glTranslated(0, tableEdgeUp + TABLEOFF1, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
@@ -380,6 +398,7 @@ void drawTable(){
         glScaled(TABLEOFF2, tableLength/2 - HOLE_TOLERANCE*holeRadius, TABLEOFF2); 
         glutSolidCube(1);
     glPopMatrix();
+    
 
 	glMaterialfv(GL_FRONT, GL_AMBIENT, base_ambient_material);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, base_diffuse_material);
@@ -403,13 +422,26 @@ void drawBalls(){
     glTranslated(0, 0, - tableHeight - ballRadius);
 }
 void drawAim(){
+    Vec2 vv = getViewDirection();
+    vv = Vec2(vv.y, - vv.x);
+    vv.mult(ballRadius);
+
     cbp = balls[0].getPosition();
     glLineWidth(5);
     glColor3f(0.839215686, 0.28627451, 1);
-    glBegin(GL_LINES);
-        glVertex3f(cbp.x, cbp.y, tableHeight+1);
-        glVertex3f(cbp.x + (lookingAtX - lookingFromX)*5,cbp.y +  (lookingAtY - lookingFromY)*5, tableHeight + 1);
-    glEnd();
+    glPushMatrix();
+        glTranslated(vv.x, vv.y, 0);
+        glBegin(GL_LINES);
+            glVertex3f(cbp.x, cbp.y, tableHeight+1);
+            glVertex3f(cbp.x + (lookingAtX - lookingFromX)*5,cbp.y +  (lookingAtY - lookingFromY)*5, tableHeight + 1);
+        glEnd();
+        vv.mult(-2);
+        glTranslated(vv.x, vv.y, 0);
+        glBegin(GL_LINES);
+            glVertex3f(cbp.x, cbp.y, tableHeight+1);
+            glVertex3f(cbp.x + (lookingAtX - lookingFromX)*5,cbp.y +  (lookingAtY - lookingFromY)*5, tableHeight + 1);
+        glEnd();
+    glPopMatrix();
 }
 void drawCoord(){
     glLineWidth(1);
@@ -510,16 +542,23 @@ void fillCluster(){
         double currentX = -row * ballRadius;
         for(int i = 0; i < numInRow; i++){
             GLfloat r, g, b;
-            if (ballId % 2 == 0){
+            if(ballId == 5){
+                r = 0;
+                g = 0;
+                b = 0;
+            }else{
+                if (ballId % 2 == 0){
                 r = 1;
                 g = 0;
                 b = 0;
-            }else
-            {
-                r = 0;
-                g = 0;
-                b = 1;
+                }else
+                {
+                    r = 0;
+                    g = 0;
+                    b = 1;
+                }
             }
+            
             
             balls.push_back(Ball(Vec2(currentX, currentY + ballRadius/5), Vec2(0, 0), ballRadius, r, g, b, ballId++));
             currentX += 2*ballRadius;
@@ -544,8 +583,6 @@ bool anyBallsMoving(){
 Vec2 getViewDirection(){
     Vec2 v(lookingAtX - lookingFromX, lookingAtY - lookingFromY);
     v.normalize();
-
-
     return v;
 }
 void setStandardLimitsAndVals(){

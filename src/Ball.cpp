@@ -1,4 +1,5 @@
 #include "Ball.h"
+#include "putils.h"
 #include <GL/glut.h>
 #include <bitset>
 
@@ -137,7 +138,9 @@ bool Ball::getMoving(){
 
 void Ball::updateSelf(unsigned int * activity){
     double ckmag = this->velocity.squaredMag();
-    if (ckmag == 0) return;
+    if (ckmag == 0) {
+        return;
+    }
     this->position.add(this->velocity);
 
     this->velocity.mult(0.99);
@@ -209,4 +212,48 @@ bool Ball::getOnTable(){
 }
 bool Ball::setOnTable(bool b){
     this->onTable = b;
+}
+
+bool Ball::holeCollide(double limUp, double limDown, double limLeft, double limRight, double holeRadius){
+    //KOORDINATE RUPA SU
+
+    //GORE LEVO: (limUp, limLeft)
+    //GORE DESNO: (limUp, limRight)
+    //SREDNJA LEVO: (0, limLeft)
+    //SREDNJA DESNO: (0, limRight)
+    //DONJA LEVO: (limDown, limLeft)
+    //DONJA DESNO: (limDown, limRight)
+
+    if(circleDrop(limLeft, limUp, holeRadius, position.x, position.y)) {
+        cout << "POT top left" << endl;
+        return true;
+    }
+    if(circleDrop(limRight, limUp, holeRadius, position.x, position.y)){
+        cout << "POT top right" << endl;
+        return true;
+    }
+
+    if(circleDrop(limLeft, limDown, holeRadius, position.x, position.y)){
+        cout << "POT bottom left" << endl;
+        return true;
+    }
+    if(circleDrop(limRight, limUp, holeRadius, position.x, position.y)){
+        return true;
+    }
+
+
+    if(circleDrop(limLeft, 0, holeRadius, position.x, position.y)){
+        cout << "POT mid left" << endl;
+        return true;
+    } 
+    if(circleDrop(limRight, 0, holeRadius, position.x, position.y)) {
+        cout << "POT mid right" << endl;
+        return true;
+    }
+}
+
+void Ball::dieCompletely(unsigned int * act){
+    this->velocity.anull();
+    onTable = false;
+    *act = *act & bmaskTurnOff;
 }
