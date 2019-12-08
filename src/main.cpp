@@ -666,13 +666,12 @@ void toggleFineTune(){
         deltaTheta = .02;
     }else{
         fineTune = true;
-        deltaTheta = .002;
+        deltaTheta = .001;
     }
 }
 
 // =================== TEXT DRAW FUNCTIONS ===================
-void output(double x, double y, float r, float g, float b, void * font, string s)
-{
+void output(double x, double y, float r, float g, float b, void * font, string s){
     glColor3f( r, g, b );
     glRasterPos2f(x, y);
     int len, i;
