@@ -2,10 +2,10 @@
 #include <vector>
 #include <math.h>
 #include <time.h>
-#include <GL/glut.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <string.h>
 
+#include <GL/glut.h>
 
 #include "Vec2.h"
 #include "Ball.h"
@@ -14,72 +14,54 @@
 
 using namespace std;
 
-vector<Ball> balls;         //Niz koji ce sadrzati kugle
-double camR;                //Sferne koordinate (r, teta, ro) koje opisuju poziciju kamere (uglavnom je 'Ro' konvencionalna oznaka za poluprecnik, ovde oznacava drugi ugao)
-double camTheta;
-double camRho;
+// =================================================== DEKLARACIJE ===================================================
 
-double Rlimit[2];
-double ThetaLimit[2];
-double RhoLimit[2];
-double Slimit[2];
+//Vektor koji sadrzi kugle
+vector<Ball>balls;         
 
-double deltaR;              //Predstavljaju promenu svake od sfernih koordinata iliti "osetljivost" kamere.
-double deltaTheta;          //Bice izracunato na osnovu dimenzija stola. Za sad se koriste fiksne vrednosti.
-double deltaRho;
-
-double tableLength;         //Dimenzije stola
-double tableWidth;
-double ballRadius;     
-double holeRadius;     
-
-unsigned int activityCheck = 0;
-
-//Racuna relevantne koordinate ivice stola. Koristice se u detekciji kolizija sa ivicama.
-
-
-double ballLimUp, ballLimDown, ballLimLeft, ballLimRight;
-
-double lookingAtX;  
-double lookingAtY;
-double lookingAtZ;
-
-double lookingFromX;
-double lookingFromY;
-double lookingFromZ;
-
-
-double shotStrength;
-
-//Oznacava da li se igrac trenutno nalazi u rezimu udarca kugle ili ne.
-//Ukoliko se nalazi u rezimu udarca, koordinate "oka" kamere bice sferne koordinate bele kugle a ne sfere oko stola
-bool inShotMode = false;
-bool fineTune;
-
-//Standardne funkcije
+// =================== EVENT FUNCTIONS ===================
 static void on_display(void);
 static void on_reshape(int, int);
 static void on_keyboard(unsigned char key,int x, int y);
-
-//Neke od glavnih funkcija
-void initAll(double);
-void drawTable();
-void directCamera();
-void testBalls();
-void drawCoord();
 void mainTimerCallBack(int);
-bool anyBallsMoving();
-void initBalls();
-void drawBalls();
-void fillCluster();
-void drawAim();
-void toggleFineTune();
-Vec2 getViewDirection();
 
+// =================== INITIALIZING FUNCTIONS ===================
+void initAll(double);
+void fillCluster();
+
+// =================== DRAW FUNCTIONS ===================
+void directCamera();
+void drawTable();
+void drawCoord();
+void drawBalls();
+void drawAim();
+void drawHud();
+void testBalls();
+
+// =================== MISC FUNCTIONS ===================
+bool anyBallsMoving();
+Vec2 getViewDirection();
 void setStandardLimitsAndVals();
 void setShotModeLimitsAndVals();
+void toggleFineTune();
 
-Vec2 cbp;
+// =================== TEXT DRAW FUNCTIONS ===================
+void output(double x, double y, float r, float g, float b, void * font, string s);
+string getShotStrengthString();
+string getFineTuneString();
+string getShotModeString();
+
+
+
+
+
+
+
+
+
+
+
+// =================================================== IMPLEMENTACIJE ===================================================
 
 int main(int argc, char ** argv){
 
@@ -88,6 +70,7 @@ int main(int argc, char ** argv){
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
+    //glutInitWindowSize(1000, 1000);
     glutInitWindowSize(1000, 1000);
     glutInitWindowPosition(200, 200);
     glutCreateWindow(argv[0]);
@@ -110,65 +93,35 @@ int main(int argc, char ** argv){
     return 0;
 }
 
-//EVENT FUNCTIONS:
+// =================== EVENT FUNCTIONS ===================:
 static void on_display(){
-/*     Vec2 cbp = balls[0].getPosition();
-    cout << "Cueball: " << cbp.x << ", " << cbp.y << endl;
-    cout << "Topleft: " << tableEdgeUp << ", " << tableEdgeLeft << endl; */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60, 1, 1, 800); 
+    gluPerspective(60, wwidth/wheight, 1, 800); 
 
-    glMatrixMode(GL_MODELVIEW);
-    
     glEnable(GL_LIGHT0);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
 
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     directCamera();
     drawTable();      
     drawBalls();
-    //drawCoord();
     if(inShotMode) drawAim();
 
+    drawHud();
     glutSwapBuffers();
 }
-void mainTimerCallBack(int arg){
-    switch (arg){
-        case REDRRAW_BALLS:
-            for (int i = 0; i < balls.size(); i++){
-                if(balls[i].getOnTable() && balls[i].getMoving()){
-                    if (balls[i].holeCollide(tableEdgeUp, tableEdgeDown, tableEdgeLeft, tableEdgeRight, holeRadius)){
-                        balls[i].dieCompletely(&activityCheck);
-                        continue;
-                    }
-                    balls[i].cushionCollide(ballLimUp, ballLimDown, ballLimLeft, ballLimRight);
-                    for(int j = 0; j < balls.size(); j++){
-                        if(i == j || !balls[j].getOnTable()){
-                            continue;
-                        }
-                        balls[i].collideWith(balls[j]);
-                    }
-                    balls[i].updateSelf(&activityCheck);
-                }
-            }
-            
-            glutPostRedisplay();
-            
-            if(activityCheck != 0){
-                glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, arg);
-            }else{
-                cout << "DONEEEEEEEEEEEEEEEEEEEEEEEE" << endl;
-            }
-            break;
-    }
-}
 static void on_reshape(int x, int y){
+    wwidth = x;
+    wheight = y;
+    glViewport(0, 0, x, y);
     glutPostRedisplay();
 }
 static void on_keyboard(unsigned char c,int x, int y){
@@ -190,9 +143,7 @@ static void on_keyboard(unsigned char c,int x, int y){
         case 'w':
             if(withinBounds(&camRho, RhoLimit)){
                 camRho -= .02;
-                //cout << "RHO: " << camRho << endl;
             }else{
-                //cout << "Cant go past " << camRho << endl;
             }
             glutPostRedisplay();
             break;
@@ -200,15 +151,12 @@ static void on_keyboard(unsigned char c,int x, int y){
         case 's':
             if(withinBounds(&camRho, RhoLimit)){
                 camRho += .02;
-                //cout << "RHO: " << camRho << endl;
             }else{
-                //cout << "Cant go past " << camRho << endl;
             }
             glutPostRedisplay();
             break;
         case 'I':
         case 'i':
-            //camR -= .5;
             if(withinBounds(&camR, Rlimit)){
                 camR -= ballRadius;
             }
@@ -223,15 +171,15 @@ static void on_keyboard(unsigned char c,int x, int y){
             
             break;
         case '+':
-            if(withinBoundsSimple(shotStrength + 0.1, Slimit)){
+            if(shotStrength < Slimit[1]){
                 shotStrength += 0.1;
-                cout << "S: " << shotStrength << endl;
+                glutPostRedisplay();
             }
             break;
         case '-':
-            if(withinBoundsSimple(shotStrength - 0.1, Slimit)){
+            if(shotStrength > Slimit[0]){
                 shotStrength -= 0.1;
-                cout << "S: " << shotStrength << endl;
+                glutPostRedisplay();
             }
             break;
         case 'N':
@@ -250,12 +198,17 @@ static void on_keyboard(unsigned char c,int x, int y){
             }else{
                 inShotMode = false;
                 setStandardLimitsAndVals();
+                if(fineTune){
+                    toggleFineTune();
+                }
             }
             glutPostRedisplay();
             break;
         case 'f':
         case 'F':
+            if(!inShotMode && !fineTune) break;
             toggleFineTune();
+            glutPostRedisplay();
             break;
         case 'H':
         case 'h':
@@ -277,12 +230,52 @@ static void on_keyboard(unsigned char c,int x, int y){
         
     }
 }
+void mainTimerCallBack(int arg){
+    switch (arg){
+        case REDRRAW_BALLS:
+            for (int i = 0; i < balls.size(); i++){
+                if(balls[i].getOnTable() && balls[i].getMoving()){
+                    if (balls[i].pocketCollide(tableEdgeUp, tableEdgeDown, tableEdgeLeft, tableEdgeRight, pocketRadius)){
+                        balls[i].dieCompletely(&activityCheck);
+                        continue;
+                    }
+                    balls[i].cushionCollide(ballLimUp, ballLimDown, ballLimLeft, ballLimRight);
+                    for(int j = 0; j < balls.size(); j++){
+                        if(i == j || !balls[j].getOnTable()){
+                            continue;
+                        }
+                        balls[i].collideWith(balls[j]);
+                    }
+                    balls[i].updateSelf(&activityCheck);
+                }
+            }
+            
+            glutPostRedisplay();
+            
+            if(activityCheck != 0){
+                glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, arg);
+            }else{
+                cout << "DONEEEEEEEEEEEEEEEEEEEEEEEE" << endl;
+                shotStrength = 1.9;
+                if(!balls[0].getOnTable()){
+                    balls[0] = Ball(Vec2(0, tableEdgeDown/2), Vec2(0, 0), ballRadius, 1, 1, 1, 0);
+                }
+            }
+            break;
+    }
+}
 
-//DRAW FUNCTIONS:
+
+// =================== DRAW FUNCTIONS ===================
+//Usmeravanje pogleda
 void directCamera(){
-    //Usmeravanje kamere na osnovu sfernih koordinata 
-    //Centar sfere nije centar koordinatnog sistema vec centar stola, koji ima koordinate (0, 0, tableHeight). Zbog toga se tableHeight dodaje na poslednju koordinatu.
-    //glLoadIdentity();
+    /**
+     * Usmeravanje pogleda, zavisi od rezima igre.
+     * Ukoliko igrac nije u rezimu udarca tada se gleda iz neke tacke na sferi sa centrom u centru povrsine stola u centar stola
+     * Ukoliko igrac jeste u rezimu udarca tada se gleda iz neke tacke na sferi sa centrom u centru bele kugle u centar bele kugle
+     * 
+     * 
+     * **/
 
     lookingFromZ = camR*cos(camRho) + tableHeight;
     lookingFromX = camR*cos(camTheta)*sin(camRho);
@@ -304,98 +297,141 @@ void directCamera(){
         0, 0, 1
     );   
 }
+//Iscrtava sto
 void drawTable(){
-    
-	glMaterialfv(GL_FRONT, GL_AMBIENT, table_ambient_material);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, table_diffuse_material);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, table_specular_material);
-	glMaterialf(GL_FRONT, GL_SHININESS, table_shininess);
-    //Drawing table top
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, table_ambient_material);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, table_diffuse_material);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, table_specular_material);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, table_shininess);
+    //Povrsina stola
     glPushMatrix();
         glTranslated(0, 0, tableHeight - TABLEOFF1); //Translacija na odgovarajucu visinu
         glScaled(tableWidth, tableLength, TABLEOFF2); //Skaliranje po dimenzijama
         glutSolidCube(1);     
     glPopMatrix();
     
-    glMaterialfv(GL_FRONT, GL_AMBIENT, hole_ambient_material);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, hole_diffuse_material);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, hole_specular_material);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, pocket_ambient_material);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, pocket_diffuse_material);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, pocket_specular_material);
 
-    //Drawing holes
+    //Rupe
     glPushMatrix();
         glTranslated(0, 0, tableHeight+0.1);
         glPushMatrix();
             glTranslated(tableEdgeLeft, tableEdgeUp, 0);
-            drawCircle(holeRadius);
+            drawCircle(pocketRadius);
         glPopMatrix();
         glPushMatrix();
             glTranslated(tableEdgeLeft, tableEdgeDown, 0);
             glColor3f(0, 0, 0);
-            drawCircle(holeRadius);
+            drawCircle(pocketRadius);
         glPopMatrix();
         glPushMatrix();
             glTranslated(tableEdgeRight, tableEdgeUp, 0);
             glColor3f(0, 0, 0);
-            drawCircle(holeRadius);
+            drawCircle(pocketRadius);
         glPopMatrix();
         glPushMatrix();
             glTranslated(tableEdgeRight, tableEdgeDown, 0);
             glColor3f(0, 0, 0);
-            drawCircle(holeRadius);
+            drawCircle(pocketRadius);
         glPopMatrix();
         glPushMatrix();
-            glTranslated(tableEdgeLeft, 0, 0);
+            glTranslated(tableEdgeLeft - pocketRadius/2, 0, 0);
             glColor3f(0, 0, 0);
-            drawCircle(holeRadius);
+            drawCircle(pocketRadius);
         glPopMatrix();
+
         glPushMatrix();
-            glTranslated(tableEdgeRight, 0, 0);
+            glTranslated(tableEdgeRight + pocketRadius/2, 0, 0);
             glColor3f(0, 0, 0);
-            drawCircle(holeRadius);
+            drawCircle(pocketRadius);
         glPopMatrix();
     glPopMatrix();
 
-    /* glBegin(GL_POLYGON);
-        glVertex3f(tableEdgeLeft + holeRadius, tableEdgeUp + TABLEOFF2, tableHeight + TABLEOFF2);
-        glVertex3f(tableEdgeLeft + holeRadius*HOLE_TOLERANCE/2, tableEdgeUp + TABLEOFF2, tableHeight + TABLEOFF2);
-        //glVertex3f(tableEdgeLeft + holeRadius, tableEdgeUp, tableHeight + TABLEOFF2); 
-        //glVertex3f(0, 0, tableHeight + TABLEOFF2);
-        glVertex3f(tableEdgeLeft + holeRadius*HOLE_TOLERANCE/2, tableEdgeUp, tableHeight + TABLEOFF2);
-    glEnd();
 
-    glBegin(GL_POLYGON);
+    //Cilindri oko rupa
 
-    glEnd(); */
+    glMaterialfv(GL_FRONT, GL_AMBIENT, cyl_ambient_material);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, cyl_diffuse_material);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, cyl_specular_material);
+    glMaterialf(GL_FRONT, GL_SHININESS, cyl_shininess);
 
-    //Drawing rails...
+    glPushMatrix();
+        glTranslated(tableEdgeLeft - pocketRadius/2, 0, tableHeight); 
+        glRotated(180, 0, 0, 1);
+        glScaled(pocketRadius, pocketRadius, 1);
+        draw_object(TABLEOFF2);
+    glPopMatrix();
+
+    glPushMatrix();
+        glTranslated(tableEdgeRight + pocketRadius/2, 0, tableHeight); 
+        //glRotated(180, 0, 0, 1);
+        glScaled(pocketRadius, pocketRadius, 1);
+        draw_object(TABLEOFF2);
+    glPopMatrix();
+
+    glPushMatrix();
+        glTranslated(tableEdgeLeft, tableEdgeUp, tableHeight); 
+        glRotated(135, 0, 0, 1);
+        glScaled(pocketRadius, pocketRadius, 1);
+        draw_object(TABLEOFF2);
+    glPopMatrix();
+
+    glPushMatrix();
+        glTranslated(tableEdgeRight, tableEdgeUp, tableHeight); 
+        glRotated(45, 0, 0, 1);
+        glScaled(pocketRadius, pocketRadius, 1);
+        draw_object(TABLEOFF2);
+    glPopMatrix();
+
+    glPushMatrix();
+        glTranslated(tableEdgeRight, tableEdgeDown, tableHeight); 
+        glRotated(315, 0, 0, 1);
+        glScaled(pocketRadius, pocketRadius, 1);
+        draw_object(TABLEOFF2);
+    glPopMatrix();
+
+    glPushMatrix();
+        glTranslated(tableEdgeLeft, tableEdgeDown, tableHeight); 
+        glRotated(225, 0, 0, 1);
+        glScaled(pocketRadius, pocketRadius, 1);
+        draw_object(TABLEOFF2);
+    glPopMatrix();
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, pocket_ambient_material);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, pocket_diffuse_material);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, pocket_specular_material);
+    //Mantinele
     glPushMatrix();
         glTranslated(0, tableEdgeUp + TABLEOFF1, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
-        glScaled(tableWidth - HOLE_TOLERANCE*holeRadius, TABLEOFF2, TABLEOFF2); 
+        glScaled(tableWidth - POCKET_TOLERANCE*pocketRadius, TABLEOFF2, TABLEOFF2); 
         glutSolidCube(1);
     glPopMatrix();
     glPushMatrix();
         glTranslated(0, tableEdgeDown - TABLEOFF1, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
-        glScaled(tableWidth - HOLE_TOLERANCE*holeRadius, TABLEOFF2, TABLEOFF2); 
+        glScaled(tableWidth - POCKET_TOLERANCE*pocketRadius, TABLEOFF2, TABLEOFF2); 
         glutSolidCube(1);
     glPopMatrix();
     glPushMatrix();
         glTranslated(tableEdgeRight + TABLEOFF1, tableEdgeUp/2, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
-        glScaled(TABLEOFF2, tableLength/2 - HOLE_TOLERANCE*holeRadius, TABLEOFF2); 
+        glScaled(TABLEOFF2, tableLength/2 - POCKET_TOLERANCE*pocketRadius, TABLEOFF2); 
         glutSolidCube(1);
     glPopMatrix();
     glPushMatrix();
         glTranslated(tableEdgeRight + TABLEOFF1, -tableEdgeUp/2, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
-        glScaled(TABLEOFF2, tableLength/2 - HOLE_TOLERANCE*holeRadius, TABLEOFF2); 
+        glScaled(TABLEOFF2, tableLength/2 - POCKET_TOLERANCE*pocketRadius, TABLEOFF2); 
         glutSolidCube(1);
     glPopMatrix();
     glPushMatrix();
         glTranslated(tableEdgeLeft - TABLEOFF1, tableEdgeUp/2, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
-        glScaled(TABLEOFF2, tableLength/2 - HOLE_TOLERANCE*holeRadius, TABLEOFF2); 
+        glScaled(TABLEOFF2, tableLength/2 - POCKET_TOLERANCE*pocketRadius, TABLEOFF2); 
         glutSolidCube(1);
     glPopMatrix();
     glPushMatrix();
         glTranslated(tableEdgeLeft - TABLEOFF1, -tableEdgeUp/2, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
-        glScaled(TABLEOFF2, tableLength/2 - HOLE_TOLERANCE*holeRadius, TABLEOFF2); 
+        glScaled(TABLEOFF2, tableLength/2 - POCKET_TOLERANCE*pocketRadius, TABLEOFF2); 
         glutSolidCube(1);
     glPopMatrix();
     
@@ -404,7 +440,7 @@ void drawTable(){
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, base_diffuse_material);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, base_specular_material);
 	glMaterialf(GL_FRONT, GL_SHININESS, base_shininess);
-    //Drawing table base
+    //Osnova stola
     glPushMatrix();
         glTranslated(0, 0, (tableHeight - TABLEOFF2)/2);
         glScaled(0.8*tableWidth, 0.8*tableLength, tableHeight - TABLEOFF2);
@@ -414,20 +450,28 @@ void drawTable(){
         glutWireCube(1);
     glPopMatrix(); 
 }
+//Iscrtava one kugle koje su trenutno aktivne, tj nisu ubacene u rupu
 void drawBalls(){
     glTranslated(0, 0,tableHeight + ballRadius);
     for(Ball b: balls){   
         if(b.getOnTable()) b.drawSelf();
     }
     glTranslated(0, 0, - tableHeight - ballRadius);
+
 }
+//Iscrtavanje nisana
 void drawAim(){
+    /**
+     * Nisam realizovan kao dve paralelene tangente na belu kuglu u pravcu pogleda
+     * 
+     * **/
+    glDisable(GL_LIGHTING);
     Vec2 vv = getViewDirection();
     vv = Vec2(vv.y, - vv.x);
     vv.mult(ballRadius);
 
-    cbp = balls[0].getPosition();
-    glLineWidth(5);
+    Vec2 cbp = balls[0].getPosition();
+    glLineWidth(2);
     glColor3f(0.839215686, 0.28627451, 1);
     glPushMatrix();
         glTranslated(vv.x, vv.y, 0);
@@ -442,7 +486,10 @@ void drawAim(){
             glVertex3f(cbp.x + (lookingAtX - lookingFromX)*5,cbp.y +  (lookingAtY - lookingFromY)*5, tableHeight + 1);
         glEnd();
     glPopMatrix();
+    glEnable(GL_LIGHTING);
 }
+//Pomocna funkcija za crtanje koordinatnog sistema.
+//Verovatno ce biti izbrisana do finalne verzije
 void drawCoord(){
     glLineWidth(1);
     glColor3f(0, 0, 1.0);
@@ -477,8 +524,30 @@ void drawCoord(){
         glVertex3f(0, 0, -1000.0);
     glEnd();
 }
+//Ispisivanje podataka relevantnih za korisnika
+void drawHud(){
+    glMatrixMode (GL_PROJECTION); 
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glColor3f(1, 1, 1);
+    
+    glDisable(GL_LIGHTING);
+        output(-0.99, 0.97, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getShotStrengthString());
+        output(-0.99, 0.92, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getShotModeString());
 
-//INITIALIZING FUNCTIONS: 
+        if(inShotMode){
+            output(-0.99, 0.87, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, "============================");
+            output(-0.99, 0.82, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, "H to hit, X again to go back");
+            output(-0.99, 0.77, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getFineTuneString());
+        }
+
+    glEnable(GL_LIGHTING);
+}
+
+// =================== INITIALIZING FUNCTIONS ===================
+
+//Samo ime kaze, inicijalizacija svega
 void initAll(double tl){--
     
     tableLength = tl;
@@ -491,10 +560,10 @@ void initAll(double tl){--
 
     if(GAMEMODE == 1){
         ballRadius = tableLength * 0.007293693;
-        holeRadius = 2*ballRadius;
+        pocketRadius = 2*ballRadius;
     }else{
         ballRadius = tableLength * 0.02182285/2;
-        holeRadius = 2.1*ballRadius;
+        pocketRadius = 2.1*ballRadius;
     }    
 
 
@@ -523,12 +592,7 @@ void initAll(double tl){--
     fillCluster();
     
 }
-void initBalls(){
-    balls.empty();
-    balls.push_back(Ball(Vec2(0, 2*tableEdgeUp/3), Vec2(0, 0),ballRadius, 1, 0, 0, 0));
-    balls.push_back(Ball(Vec2(0, 0), Vec2(0, 0), ballRadius, 0, 0, 1, 1));
-    balls.push_back(Ball(Vec2(0, 2*tableEdgeDown/3), Vec2(0, 0), ballRadius, 1, 0, 1, 2));
-}
+//Popunjavanje vektora balls kuglama sa pozicijama na pocetku bilijarske igre (trougao)
 void fillCluster(){
     balls.clear();
     balls.push_back(Ball(Vec2(0, tableEdgeDown/2), Vec2(0, 0), ballRadius, 1, 1, 1, 0));
@@ -571,7 +635,7 @@ void fillCluster(){
 
 }
 
-//MISC FUNCTIONS:
+// =================== MISC FUNCTIONS ===================
 bool anyBallsMoving(){
     return activityCheck != 0;
 }
@@ -600,15 +664,32 @@ void toggleFineTune(){
     if(fineTune){
         fineTune = false;
         deltaTheta = .02;
-        cout << "FINE TUNE OFF" << endl;
     }else{
         fineTune = true;
         deltaTheta = .002;
-        cout << "FINE TUNE ON" << endl;
     }
 }
-//LIGHT SETUP FUNCTIONS:
 
-
-
-
+// =================== TEXT DRAW FUNCTIONS ===================
+void output(double x, double y, float r, float g, float b, void * font, string s)
+{
+    glColor3f( r, g, b );
+    glRasterPos2f(x, y);
+    int len, i;
+    len = s.size();
+    for (i = 0; i < len; i++) {
+        glutBitmapCharacter(font, s[i]);
+    }
+}
+string getShotStrengthString(){
+    return "(  +-  ) Shot strength: " + to_string((int)round(shotStrength/3.9*100)) + "%";
+}
+string getFineTuneString(){
+    if(fineTune) return "(   F   ) Fine tune: ON";
+    return "(   F   ) Fine tune: OFF";
+}
+string getShotModeString(){
+    if(inShotMode) return "(   X   ) Shot mode: ON";
+    return "(   X   ) Shot mode: OFF";
+}
+    

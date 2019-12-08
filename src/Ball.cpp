@@ -190,7 +190,7 @@ bool Ball::setOnTable(bool b){
     this->onTable = b;
 }
 
-bool Ball::holeCollide(double limUp, double limDown, double limLeft, double limRight, double holeRadius){
+bool Ball::pocketCollide(double limUp, double limDown, double limLeft, double limRight, double pocketRadius){
     //KOORDINATE RUPA SU
 
     //GORE LEVO: (limUp, limLeft)
@@ -200,30 +200,30 @@ bool Ball::holeCollide(double limUp, double limDown, double limLeft, double limR
     //DONJA LEVO: (limDown, limLeft)
     //DONJA DESNO: (limDown, limRight)
 
-    if(circleDrop(limLeft, limUp, holeRadius, position.x, position.y)) {
+    if(circleDrop(limLeft, limUp, pocketRadius, position.x, position.y)) {
         cout << "POT top left" << endl;
         return true;
     }
-    if(circleDrop(limRight, limUp, holeRadius, position.x, position.y)){
+    if(circleDrop(limRight, limUp, pocketRadius, position.x, position.y)){
         cout << "POT top right" << endl;
         return true;
     }
 
-    if(circleDrop(limLeft, limDown, holeRadius, position.x, position.y)){
+    if(circleDrop(limLeft, limDown, pocketRadius, position.x, position.y)){
         cout << "POT bottom left" << endl;
         return true;
     }
-    if(circleDrop(limRight, limDown, holeRadius, position.x, position.y)){
+    if(circleDrop(limRight, limDown, pocketRadius, position.x, position.y)){
         cout << "POT bottom right" << endl;
         return true;
     }
 
 
-    if(circleDrop(limLeft, 0, holeRadius, position.x, position.y)){
+    if(circleDrop(limLeft - pocketRadius/2, 0, pocketRadius*1.1, position.x, position.y)){
         cout << "POT mid left" << endl;
         return true;
     } 
-    if(circleDrop(limRight, 0, holeRadius, position.x, position.y)) {
+    if(circleDrop(limRight + pocketRadius/2, 0, pocketRadius*1.1, position.x, position.y)) {
         cout << "POT mid right" << endl;
         return true;
     }

@@ -3,9 +3,18 @@
 #include <GL/glut.h>
 #include <math.h>
 
+
+#define PI 3.1415926535
+#define EPSILON 0.01
+
 #include <iostream>
 using namespace std;
+
 bool withinBounds(double * x, double * bounds){
+    /**
+     * Malo cudnovata funkcija, za vrlo specificnu potrebu
+     * Pravi onaj efekat 'treperenje' ukoliko korisnik proba da zumira ili da pomeri kameru uvis/dole previse.
+     * **/
     if (*x <= bounds[0]){
         *x = bounds[0] + .02;
         return false;
@@ -16,12 +25,9 @@ bool withinBounds(double * x, double * bounds){
     }
     return true;
 }
-
 bool withinBoundsSimple(double x, double * bounds){
     return (x >= bounds[0] && x <= bounds[1]);
 }
-
-
 void drawCircle(double radius){
     double t = 0;
     while(t < 2*M_PI){
@@ -34,7 +40,6 @@ void drawCircle(double radius){
     }
     glEnd();
 }
-
 void drawEllipse(double a, double b, double t_from, double t_to){
     double deltaT = 0.2;
     while(t_from < t_to){
@@ -46,11 +51,42 @@ void drawEllipse(double a, double b, double t_from, double t_to){
         t_from += deltaT;
     }
 }
-
 bool circleDrop(double bigX, double bigY, double bigRadius, double smallX, double smallY){
     Vec2 distVec = Vec2(bigX - smallX, bigY - smallY);
     double nrm = distVec.mag();
     //cout << "Distance from ball " << smallX << ", " << smallY << " and hole " << bigX << ", " << bigY << " is " << nrm << endl;
 
     return nrm <= bigRadius;
+}
+void set_normal_and_vertex(float u, float v){
+    // pravilno bi bilo y = 0 za normalu,
+    // ovako je render lepsi
+    glNormal3f(
+            sin(v),
+            cos(v),
+            0
+            );
+    glVertex3f(
+            sin(v),
+            cos(v),
+            u
+        );
+}
+void draw_object(double height){
+    float u, v;
+
+    glPushMatrix();
+
+    /* Crtamo objekat strip po strip */
+    // TODO: Ovako je ispravno :)
+    for (u = 0; u < height; u += PI / 20) {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (v = 0; v <= PI + EPSILON; v += PI / 20) {
+            set_normal_and_vertex(u, v);
+            set_normal_and_vertex(u + PI / 20, v);
+        }
+        glEnd();
+    }
+
+    glPopMatrix();
 }

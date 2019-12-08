@@ -58,7 +58,7 @@ class Ball{
         void updateSelf(unsigned int *);
         void cushionCollide(double, double, double, double);
         void collideWith(Ball &);    
-        bool holeCollide(double limUp, double limDown, double limLeft, double limRight, double holeRadius);
+        bool pocketCollide(double limUp, double limDown, double limLeft, double limRight, double pocketRadius);
         
         
 
