@@ -84,6 +84,7 @@
     //inShotMode - rezim udarca, od njega zavisi pogled i mogucnost izvodjenja udarca
     bool inShotMode = false;
     bool fineTune = false;
+    bool fullScreen = true;
 
     /**
      * 

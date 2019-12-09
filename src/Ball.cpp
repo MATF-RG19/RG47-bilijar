@@ -9,47 +9,54 @@ using namespace std;
 #define X (position.x)
 #define Y (position.y)
 
+// === KONSTRUKTORI ===
 Ball::Ball(){}
 
-//void setAll(Vec2 pos, Vec2 vel, double radius, double r, double g, double b, int i){
-
-Ball::Ball(int i){
-    setAll(Vec2(0, 0), Vec2(0, 0), 1, 0, 0, 0, i);
-}
-
-Ball::Ball(Vec2 position, int i){
-    setAll(position, Vec2(0, 0), 1, 1, 1, 1, i);
-}
-
-Ball::Ball(Vec2 position, Vec2 velocity, int i){
-    setAll(position, velocity, 1, 1, 1, 1, i);
-}
-
 Ball::Ball(Vec2 position, Vec2 velocity, double radius, GLfloat r, GLfloat g, GLfloat b, int i){
-    setAll(position, velocity, radius, r, g, b, i);
+    this->position = position;
+    this->velocity = velocity;
+    this->r = r;
+    this->g = g;
+    this->b = b;
+    this->onTable = true;
+    this->radius = radius;
+    
+    bmaskTurnOn = 1 << (i);
+    bmaskTurnOff = bmaskTurnOn ^ (-1);
 }
 
-
+// === GETERI, SETERI I SL ===
 Vec2 Ball::getPosition(){
     return position;
 }
-
 void Ball::setPosition(Vec2 position){
     this->position = position;
 }
-
 Vec2 Ball::getVelocity(){
     return velocity;
 }
-
 void Ball::setVelocity(Vec2 velocity){
     this->velocity = velocity;
 }
-
-string Ball::toString(){
-    return this->position.toString();
+bool Ball::getMoving(){
+    return (this->velocity.squaredMag() != 0);
+}
+bool Ball::getOnTable(){
+    return onTable;
+}
+bool Ball::setOnTable(bool b){
+    this->onTable = b;
+}
+unsigned int Ball::getBitMaskTurnOn(){
+    return bmaskTurnOn;
+}
+void Ball::dieCompletely(unsigned int * act){
+    this->velocity.anull();
+    onTable = false;
+    *act = *act & bmaskTurnOff;
 }
 
+// === PAMETNE METODE ===
 void Ball::drawSelf(){
     //Prilikom crtanja lopte pretpostavljamo da je koordinati sistem vec transliran uvis.
     //Razlog je izbegavanje velikog broja pozivanja funkcije glPushMatrix() zato sto ce se lopte crtati u petlji
@@ -69,12 +76,34 @@ void Ball::drawSelf(){
 
     glColor3f(r, g, b);
     glTranslated(position.x, position.y, 0);
-    glutSolidSphere(radius, 20, 20);
+    /* glutSolidSphere(radius, 20, 20); */
+    glutWireSphere(radius, 20, 20);
     glTranslated(-position.x, -position.y, 0);
 
 }
+void Ball::updateSelf(unsigned int * activity){
+    double ckmag = this->velocity.squaredMag();
+    if (ckmag == 0) {
+        return;
+    }
+    this->position.add(this->velocity);
 
+    this->velocity.mult(0.99);
+    ckmag = this->velocity.mag();
+    if (this->velocity.squaredMag() < 0.001){
+        this->velocity.anull();
+        *activity = *activity & bmaskTurnOff;
+    }else
+    {
+        *activity = *activity | bmaskTurnOn;
+    }
+    
+}
 void Ball::collideWith(Ball & b){
+    /**
+     * Zasnovano na ideji elasticnih kolizija.
+     * http://www.vobarian.com/collisions/2dcollisions2.pdf
+     * **/
     Vec2 NormalVector = this->position.r_sub(b.position); //NON - NORMALIZED VECTOR THAT CONNECTS THE TWO CENTERS
     double ballRadius = b.radius;
     double NormalVectorMag = NormalVector.mag();
@@ -125,32 +154,6 @@ void Ball::collideWith(Ball & b){
 
             
 }
-
-
-bool Ball::getMoving(){
-    return (this->velocity.squaredMag() != 0);
-}
-
-void Ball::updateSelf(unsigned int * activity){
-    double ckmag = this->velocity.squaredMag();
-    if (ckmag == 0) {
-        return;
-    }
-    this->position.add(this->velocity);
-
-    this->velocity.mult(0.99);
-    ckmag = this->velocity.mag();
-    if (this->velocity.squaredMag() < 0.001){
-        this->velocity.anull();
-        *activity = *activity & bmaskTurnOff;
-    }else
-    {
-        *activity = *activity | bmaskTurnOn;
-    }
-    
-}
-
-
 void Ball::cushionCollide(double limUp, double limDown, double limLeft, double limRight){
     Vec2 transPos;
     bool b1 = Y >= limUp;
@@ -179,17 +182,6 @@ void Ball::cushionCollide(double limUp, double limDown, double limLeft, double l
 
 
 }   
-unsigned int Ball::getBitMaskTurnOn(){
-    return bmaskTurnOn;
-}
-
-bool Ball::getOnTable(){
-    return onTable;
-}
-bool Ball::setOnTable(bool b){
-    this->onTable = b;
-}
-
 bool Ball::pocketCollide(double limUp, double limDown, double limLeft, double limRight, double pocketRadius){
     //KOORDINATE RUPA SU
 
@@ -230,8 +222,7 @@ bool Ball::pocketCollide(double limUp, double limDown, double limLeft, double li
     return false;
 }
 
-void Ball::dieCompletely(unsigned int * act){
-    this->velocity.anull();
-    onTable = false;
-    *act = *act & bmaskTurnOff;
+// === DEBUG METODE ===
+string Ball::toString(){
+    return this->position.toString();
 }

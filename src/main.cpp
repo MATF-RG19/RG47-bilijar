@@ -14,7 +14,7 @@
 
 using namespace std;
 
-// =================================================== DEKLARACIJE ===================================================
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ DEKLARACIJE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 //Vektor koji sadrzi kugle
 vector<Ball>balls;         
@@ -36,7 +36,6 @@ void drawCoord();
 void drawBalls();
 void drawAim();
 void drawHud();
-void testBalls();
 
 // =================== MISC FUNCTIONS ===================
 bool anyBallsMoving();
@@ -52,16 +51,7 @@ string getFineTuneString();
 string getShotModeString();
 
 
-
-
-
-
-
-
-
-
-
-// =================================================== IMPLEMENTACIJE ===================================================
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ IMPLEMENTACIJE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 int main(int argc, char ** argv){
 
@@ -74,6 +64,7 @@ int main(int argc, char ** argv){
     glutInitWindowSize(1000, 1000);
     glutInitWindowPosition(200, 200);
     glutCreateWindow(argv[0]);
+    glutFullScreen();
 
     if(GAMEMODE == 0){
         initAll(233);
@@ -211,6 +202,16 @@ static void on_keyboard(unsigned char c,int x, int y){
             if(!inShotMode && !fineTune) break;
             toggleFineTune();
             glutPostRedisplay();
+            break;
+        case 'p':
+        case 'P':
+            if(fullScreen){
+                fullScreen = false;
+                glutReshapeWindow(1000, 1000);
+            }else{
+                fullScreen = true;
+                glutFullScreen();
+            }
             break;
         case 'H':
         case 'h':
@@ -456,6 +457,22 @@ void drawTable(){
         glColor3f(0, 0, 0);
         glutWireCube(1);
     glPopMatrix(); 
+
+    //Tacke kod bele i crne
+    glDisable(GL_LIGHTING);
+        glPushMatrix();
+            glTranslated(0, tableEdgeDown/2, tableHeight + 1);
+            glScaled(ballRadius/7, ballRadius/10, 1);
+            glColor3f(1, 1, 1);
+            drawCircle(1);
+        glPopMatrix();
+        glPushMatrix();
+            glTranslated(0, tableEdgeUp/3 + 4*ballRadius, tableHeight + 1);
+            glScaled(ballRadius/7, ballRadius/10, 1);
+            glColor3f(1, 1, 1);
+            drawCircle(1);
+        glPopMatrix();
+    glEnable(GL_LIGHTING);
 }
 //Iscrtava one kugle koje su trenutno aktivne, tj nisu ubacene u rupu
 void drawBalls(){
@@ -556,6 +573,11 @@ void drawHud(){
             output(-0.99, 0.82, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, "H to hit, X again to go back");
             output(-0.99, 0.77, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getFineTuneString());
         }
+        if(!fullScreen){
+            output(-0.99, -0.97, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, "(   P   ) Enter fullscreen");
+        }else{
+            output(-0.99, -0.97, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, "(   P   ) Exit fullscreen");
+        }
     glDisable(GL_COLOR_MATERIAL);
     //glEnable(GL_LIGHTING);
     glPopMatrix();
@@ -598,7 +620,7 @@ void initAll(double tl){--
     RhoLimit[0] = TWENTY_DEGREES; 
     RhoLimit[1] = NINETY_DEGREES; 
 
-    shotStrength = 0.1;
+    shotStrength = 1.9;
     Slimit[0] = 0.1;
     Slimit[1] = 3.9;
 
