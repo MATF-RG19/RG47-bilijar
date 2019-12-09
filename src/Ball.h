@@ -73,8 +73,8 @@ class Ball{
         void dieCompletely(unsigned int *);
 
 
-        
-        
+      
+          
 };
 
 #endif

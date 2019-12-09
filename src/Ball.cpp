@@ -69,7 +69,7 @@ void Ball::drawSelf(){
 
     glColor3f(r, g, b);
     glTranslated(position.x, position.y, 0);
-    glutSolidSphere(radius, 50, 50);
+    glutSolidSphere(radius, 20, 20);
     glTranslated(-position.x, -position.y, 0);
 
 }
@@ -217,7 +217,6 @@ bool Ball::pocketCollide(double limUp, double limDown, double limLeft, double li
         cout << "POT bottom right" << endl;
         return true;
     }
-
 
     if(circleDrop(limLeft - pocketRadius/2, 0, pocketRadius*1.1, position.x, position.y)){
         cout << "POT mid left" << endl;

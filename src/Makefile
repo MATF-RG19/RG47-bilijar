@@ -1,7 +1,7 @@
 CC=g++
 
-pool: main.o Vec2.o Ball.o putils.o
-	$(CC) -o pool main.o Vec2.o Ball.o putils.o -lGL -lGLU -lglut -lm
+pool: main.o Vec2.o Ball.o putils.o image.o
+	$(CC) -o pool main.o Vec2.o Ball.o putils.o image.o -lGL -lGLU -lglut -lm
 
 main.o: main.cpp shconsts.h
 	$(CC) -c main.cpp shconsts.h
@@ -14,3 +14,6 @@ Ball.o: Ball.cpp Ball.h
 
 putils.o: putils.cpp putils.h
 	$(CC) -c putils.h putils.cpp
+
+image.o: image.cpp image.h
+	$(CC) -c image.h image.cpp

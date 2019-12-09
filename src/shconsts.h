@@ -100,8 +100,7 @@
 
     //Konstante osvetljenja
     GLfloat light_position[] = { 0, 0, 2*tableHeight, 0};
-    GLfloat ambient_light[] = { 0.2, 0.2, 0.2, 1 };
-
+    GLfloat ambient_light[] = { 0.3, 0.3, 0.3, 1 };
     GLfloat diffuse_light[] = { 0.95, 0.95, 0.95 ,1 };
     GLfloat specular_light[] = { 1, 1, 1, 1 };
 
@@ -128,5 +127,4 @@
     GLfloat cyl_diffuse_material[] = {  0.396078431,0.258823529,0.168627451, 1};
     GLfloat cyl_specular_material[] = { 1, 1, 1, 1 };
     GLfloat cyl_shininess = 10;
-
 #endif

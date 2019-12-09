@@ -65,7 +65,7 @@ string getShotModeString();
 
 int main(int argc, char ** argv){
 
-    cout << "PID: " << getpid() << endl;    
+    cout << getpid() << endl;    
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
@@ -80,6 +80,11 @@ int main(int argc, char ** argv){
     }else{
         initAll(350);
     }
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
 
     glutDisplayFunc(on_display);
     glutReshapeFunc(on_reshape);
@@ -87,13 +92,15 @@ int main(int argc, char ** argv){
 
     glClearColor(0.75, 0.75, 0.75, 0);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
+    
+    //glEnable(GL_COLOR_MATERIAL);
 
     glutMainLoop();
     return 0;
 }
 
-// =================== EVENT FUNCTIONS ===================:
+// =================== EVENT FUNCTIONS ==================
+
 static void on_display(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -101,16 +108,11 @@ static void on_display(){
     glLoadIdentity();
     gluPerspective(60, wwidth/wheight, 1, 800); 
 
-    glEnable(GL_LIGHT0);
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
-
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     directCamera();
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     drawTable();      
     drawBalls();
     if(inShotMode) drawAim();
@@ -255,11 +257,16 @@ void mainTimerCallBack(int arg){
             if(activityCheck != 0){
                 glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, arg);
             }else{
-                cout << "DONEEEEEEEEEEEEEEEEEEEEEEEE" << endl;
+                cout << "======= DONE =======" << endl;
                 shotStrength = 1.9;
                 if(!balls[0].getOnTable()){
                     balls[0] = Ball(Vec2(0, tableEdgeDown/2), Vec2(0, 0), ballRadius, 1, 1, 1, 0);
                 }
+                
+                for(int i = 1; i < balls.size(); i++){
+                    if (balls[i].getOnTable()) return;
+                }
+                fillCluster();
             }
             break;
     }
@@ -466,6 +473,9 @@ void drawAim(){
      * 
      * **/
     glDisable(GL_LIGHTING);
+    //glEnable(GL_COLOR_MATERIAL);
+
+
     Vec2 vv = getViewDirection();
     vv = Vec2(vv.y, - vv.x);
     vv.mult(ballRadius);
@@ -486,6 +496,9 @@ void drawAim(){
             glVertex3f(cbp.x + (lookingAtX - lookingFromX)*5,cbp.y +  (lookingAtY - lookingFromY)*5, tableHeight + 1);
         glEnd();
     glPopMatrix();
+
+
+    //glDisable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
 }
 //Pomocna funkcija za crtanje koordinatnog sistema.
@@ -526,13 +539,15 @@ void drawCoord(){
 }
 //Ispisivanje podataka relevantnih za korisnika
 void drawHud(){
+    glPushMatrix();
     glMatrixMode (GL_PROJECTION); 
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glColor3f(1, 1, 1);
     
-    glDisable(GL_LIGHTING);
+    //glDisable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
         output(-0.99, 0.97, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getShotStrengthString());
         output(-0.99, 0.92, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getShotModeString());
 
@@ -541,8 +556,9 @@ void drawHud(){
             output(-0.99, 0.82, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, "H to hit, X again to go back");
             output(-0.99, 0.77, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getFineTuneString());
         }
-
-    glEnable(GL_LIGHTING);
+    glDisable(GL_COLOR_MATERIAL);
+    //glEnable(GL_LIGHTING);
+    glPopMatrix();
 }
 
 // =================== INITIALIZING FUNCTIONS ===================
@@ -691,4 +707,3 @@ string getShotModeString(){
     if(inShotMode) return "(   X   ) Shot mode: ON";
     return "(   X   ) Shot mode: OFF";
 }
-    
