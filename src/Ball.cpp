@@ -5,11 +5,16 @@
 
 using namespace std;
 
+double Ball::epsSpeedIntensity = 0;
+
 //Ovi makroi predstavljaju cistu ljudsku lenjost
 #define X (position.x)
 #define Y (position.y)
 
 // === KONSTRUKTORI ===
+
+
+
 Ball::Ball(){}
 
 Ball::Ball(Vec2 position, Vec2 velocity, double radius, GLfloat r, GLfloat g, GLfloat b, int i){
@@ -20,9 +25,18 @@ Ball::Ball(Vec2 position, Vec2 velocity, double radius, GLfloat r, GLfloat g, GL
     this->b = b;
     this->onTable = true;
     this->radius = radius;
-    
+    this->idx = i;
+
     bmaskTurnOn = 1 << (i);
     bmaskTurnOff = bmaskTurnOn ^ (-1);
+
+    if(epsSpeedIntensity == 0){
+        epsSpeedIntensity = radius/10;
+    }
+
+
+
+    
 }
 
 // === GETERI, SETERI I SL ===
@@ -55,6 +69,12 @@ void Ball::dieCompletely(unsigned int * act){
     onTable = false;
     *act = *act & bmaskTurnOff;
 }
+int Ball::getIdx(){
+    return idx;
+}
+
+
+
 
 // === PAMETNE METODE ===
 void Ball::drawSelf(){
@@ -76,8 +96,8 @@ void Ball::drawSelf(){
 
     glColor3f(r, g, b);
     glTranslated(position.x, position.y, 0);
-    /* glutSolidSphere(radius, 20, 20); */
-    glutWireSphere(radius, 20, 20);
+    glutSolidSphere(radius, NUM_SLICES, NUM_STACKS);
+    //glutWireSphere(radius, 20, 20);
     glTranslated(-position.x, -position.y, 0);
 
 }
@@ -90,6 +110,7 @@ void Ball::updateSelf(unsigned int * activity){
 
     this->velocity.mult(0.99);
     ckmag = this->velocity.mag();
+    //HACK: promeni donji this->velocity.squaredMag() u ckmag*0.99
     if (this->velocity.squaredMag() < 0.001){
         this->velocity.anull();
         *activity = *activity & bmaskTurnOff;
@@ -98,44 +119,47 @@ void Ball::updateSelf(unsigned int * activity){
         *activity = *activity | bmaskTurnOn;
     }
     
+    
 }
-void Ball::collideWith(Ball & b){
+bool Ball::collideWith(Ball & b){
     /**
      * Zasnovano na ideji elasticnih kolizija.
      * http://www.vobarian.com/collisions/2dcollisions2.pdf
      * **/
+
     Vec2 NormalVector = this->position.r_sub(b.position); //NON - NORMALIZED VECTOR THAT CONNECTS THE TWO CENTERS
+    
     double ballRadius = b.radius;
     double NormalVectorMag = NormalVector.mag();
     if(NormalVectorMag > 2*ballRadius){ 
-        return;
+        return false;
     }
-
+    
+    
     if(NormalVectorMag < 2*ballRadius){
-        //The Balls are intersecting which needs to be fixed.
-        double intersectionDepth = 2*ballRadius - NormalVectorMag; //The depth of intersection
-        //Ball 1 must move BACK (in the -1 direction) across the normal vector with the intensity of the intersection depth
+        //Lopte ulaze jedna u drugu, razdvajaju se da ne bi bilo glitchovanja
+        double intersectionDepth = 2*ballRadius - NormalVectorMag; //dubina preseka
+        //Svaka lopta se pomera upola
         Vec2 correctionVector = NormalVector.r_normalize();
         correctionVector.mult(intersectionDepth/2);
-        this->position.add(correctionVector);
 
+        
+
+        this->position.add(correctionVector);
         
         b.position.sub(correctionVector);
         
-        //cout << "NVM: " << NormalVector.mag() << ", 2ballrad: " << 2*ballRadius << endl;
     }
     
     NormalVector = this->position.r_sub(b.position);
-    //cout << "AFTER ALL: MAG: " << NormalVector.mag() << ", RAD: " << 2*ballRadius << endl;
     NormalVector.normalize();
     Vec2 TangentVector = Vec2(-NormalVector.y, NormalVector.x);
     
-    //Project velocities onto normal and tangent vectors
 
-    double ball1NormalIntensity = this->velocity.dot(NormalVector); //this will be the intensity in the normal direction of ball 1
+    double ball1NormalIntensity = this->velocity.dot(NormalVector); 
     double ball1TangentIntensity = this->velocity.dot(TangentVector);
 
-    double ball2NormalIntensity = b.velocity.dot(NormalVector); //this will be the intensity in the normal direction of ball 2
+    double ball2NormalIntensity = b.velocity.dot(NormalVector); 
     double ball2TangentIntensity = b.velocity.dot(TangentVector);
 
     double ball1NormalPower = ball2NormalIntensity;
@@ -143,19 +167,25 @@ void Ball::collideWith(Ball & b){
 
     Vec2 ball1NormalComponent = NormalVector.r_mult(ball1NormalPower);
     Vec2 ball1TangentComponent = TangentVector.r_mult(ball1TangentIntensity);
-
+    
     Vec2 ball2NormalComponent = NormalVector.r_mult(ball2NormalPower);
     Vec2 ball2TangentComponent = TangentVector.r_mult(ball2TangentIntensity);
 
     ball1NormalComponent.add(ball1TangentComponent);
-    this->velocity = ball1NormalComponent;
+    setVelocity(ball1NormalComponent);
+    
+    
     ball2NormalComponent.add(ball2TangentComponent);
-    b.velocity = ball2NormalComponent;
+    //b.setVelocity(ball2NormalComponent);
+    b.setVelocity(ball2NormalComponent);
+    //*b2new = Vec2(ball2NormalComponent.x, ball2NormalComponent.y);
+
+    return true;
 
             
 }
 void Ball::cushionCollide(double limUp, double limDown, double limLeft, double limRight){
-    Vec2 transPos;
+    
     bool b1 = Y >= limUp;
     bool b2 = Y < limDown;
     bool b3 = X > limRight;
@@ -193,29 +223,29 @@ bool Ball::pocketCollide(double limUp, double limDown, double limLeft, double li
     //DONJA DESNO: (limDown, limRight)
 
     if(circleDrop(limLeft, limUp, pocketRadius, position.x, position.y)) {
-        cout << "POT top left" << endl;
+        //cout << "POT top left" << endl;
         return true;
     }
     if(circleDrop(limRight, limUp, pocketRadius, position.x, position.y)){
-        cout << "POT top right" << endl;
+        //cout << "POT top right" << endl;
         return true;
     }
 
     if(circleDrop(limLeft, limDown, pocketRadius, position.x, position.y)){
-        cout << "POT bottom left" << endl;
+        //cout << "POT bottom left" << endl;
         return true;
     }
     if(circleDrop(limRight, limDown, pocketRadius, position.x, position.y)){
-        cout << "POT bottom right" << endl;
+        //cout << "POT bottom right" << endl;
         return true;
     }
 
     if(circleDrop(limLeft - pocketRadius/2, 0, pocketRadius*1.1, position.x, position.y)){
-        cout << "POT mid left" << endl;
+        //cout << "POT mid left" << endl;
         return true;
     } 
     if(circleDrop(limRight + pocketRadius/2, 0, pocketRadius*1.1, position.x, position.y)) {
-        cout << "POT mid right" << endl;
+        //cout << "POT mid right" << endl;
         return true;
     }
 

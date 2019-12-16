@@ -5,7 +5,7 @@
     #include <vector>
 
     #define REDRRAW_BALLS (0)
-    #define REDRRAW_BALLS_INTERVAL (5)
+    #define REDRRAW_BALLS_INTERVAL (15)
 
     #define TABLEOFF1 (2)
     #define TABLEOFF2 (4)
@@ -19,11 +19,14 @@
 
     #define POCKET_TOLERANCE (2)
     
+    #define CLOTH_TEXTURE_PATH "cloth_text.bmp"
     double wwidth;
     double wheight;
 
     static const double tableRatio = 0.5;
     static const int tableHeight = 73;
+
+    
 
     /**
      * SFERNE KOORDINATE KAMERE
@@ -54,6 +57,11 @@
     double tableEdgeLeft;
     double tableEdgeRight;
 
+
+    double ambientWidth;
+    double ambientLength;
+    double ambientHeight;
+    
     /**
      * Poluprecnik kugle i poluprecnik rupe
      * ballLim__ predstavljaju granice (gore dole levo desno) dokle kugla sme da ide
@@ -62,8 +70,6 @@
     double ballRadius;     
     double pocketRadius;
     double ballLimUp, ballLimDown, ballLimLeft, ballLimRight;
-
-
     /**
      * 
      * lookingFromXYZ - koordinate tacke iz koje se trenutno gleda
@@ -115,9 +121,10 @@
     GLfloat pocket_specular_material[] = { 1, 1, 1, 1 };
     GLfloat pocket_shininess = 10;
 
-    GLfloat base_ambient_material[] = { 0.48,0.46,0.4,1 };
-    GLfloat base_diffuse_material[] = { 0.48,0.46,0.4,1};
-    GLfloat base_specular_material[] = { 1, 0, 0, 1 };
+    //glColor3f(0.30859375,0.140625,0.0703125);
+    GLfloat base_ambient_material[] = { 0.30859375,0.140625,0.0703125,1 };
+    GLfloat base_diffuse_material[] = { 0.30859375,0.140625,0.0703125, 1};
+    GLfloat base_specular_material[] = {0.7, 0.5, 0.7, 1  };
     GLfloat base_shininess = 10;
 
     GLfloat trans_ambient_material[] = { 0.48,0.46,0.4,0.2 };

@@ -7,17 +7,34 @@
 
 #include <GL/glut.h>
 
+#include <pthread.h>
+#include <sched.h>
+
+
+
 #include "Vec2.h"
 #include "Ball.h"
 #include "putils.h"
 #include "shconsts.h"
+#include "image.h"
 
 using namespace std;
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ DEKLARACIJE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 //Vektor koji sadrzi kugle
-vector<Ball>balls;         
+vector<Ball>balls;       
+//Blokira opasne operacije kod kugli prilikom detekcije kolizija (valjda samo setVelocity, provericu da li je jos nesto opasno)
+static GLuint names[2];
+
+
+
+void * handleCollision(int i);
+
+long skipped = 0;
+long total = 0;
+
+
 
 // =================== EVENT FUNCTIONS ===================
 static void on_display(void);
@@ -32,6 +49,7 @@ void fillCluster();
 // =================== DRAW FUNCTIONS ===================
 void directCamera();
 void drawTable();
+void drawAmbient();
 void drawCoord();
 void drawBalls();
 void drawAim();
@@ -86,6 +104,34 @@ int main(int argc, char ** argv){
     
     //glEnable(GL_COLOR_MATERIAL);
 
+    //OVO TREBA IZDVOJITI U FUNKCIJU POSEBNU!!!!!!!!!!!!!!!
+    /* Image * image;
+    glEnable(GL_TEXTURE_2D);
+
+    glTexEnvf(GL_TEXTURE_ENV,
+              GL_TEXTURE_ENV_MODE,
+              GL_REPLACE);
+
+    image = image_init(0, 0);
+    image_read(image, CLOTH_TEXTURE_PATH);
+
+    glGenTextures(2, names);
+
+    glBindTexture(GL_TEXTURE_2D, names[0]);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 image->width, image->height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+
+    glBindTexture(GL_TEXTURE_2D, 0); */
+
     glutMainLoop();
     return 0;
 }
@@ -105,6 +151,7 @@ static void on_display(){
     directCamera();
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     drawTable();      
+    //drawAmbient();
     drawBalls();
     if(inShotMode) drawAim();
 
@@ -233,6 +280,7 @@ static void on_keyboard(unsigned char c,int x, int y){
         
     }
 }
+
 void mainTimerCallBack(int arg){
     switch (arg){
         case REDRRAW_BALLS:
@@ -249,8 +297,14 @@ void mainTimerCallBack(int arg){
                         }
                         balls[i].collideWith(balls[j]);
                     }
+                  
                     balls[i].updateSelf(&activityCheck);
+
+
+                }else{
+                    skipped++;
                 }
+                total++;
             }
             
             glutPostRedisplay();
@@ -258,21 +312,23 @@ void mainTimerCallBack(int arg){
             if(activityCheck != 0){
                 glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, arg);
             }else{
-                cout << "======= DONE =======" << endl;
                 shotStrength = 1.9;
                 if(!balls[0].getOnTable()){
                     balls[0] = Ball(Vec2(0, tableEdgeDown/2), Vec2(0, 0), ballRadius, 1, 1, 1, 0);
                 }
-                
+                bool fill = true;
                 for(int i = 1; i < balls.size(); i++){
-                    if (balls[i].getOnTable()) return;
+                    if (balls[i].getOnTable()){
+                        fill = false;
+                        break;
+                    }
                 }
-                fillCluster();
+                if(fill) fillCluster();
+                
             }
             break;
     }
 }
-
 
 // =================== DRAW FUNCTIONS ===================
 //Usmeravanje pogleda
@@ -370,42 +426,42 @@ void drawTable(){
         glTranslated(tableEdgeLeft - pocketRadius/2, 0, tableHeight); 
         glRotated(180, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2);
+        draw_object(TABLEOFF2, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight + pocketRadius/2, 0, tableHeight); 
         //glRotated(180, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2);
+        draw_object(TABLEOFF2, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeLeft, tableEdgeUp, tableHeight); 
         glRotated(135, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2);
+        draw_object(TABLEOFF2, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight, tableEdgeUp, tableHeight); 
         glRotated(45, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2);
+        draw_object(TABLEOFF2, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight, tableEdgeDown, tableHeight); 
         glRotated(315, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2);
+        draw_object(TABLEOFF2, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeLeft, tableEdgeDown, tableHeight); 
         glRotated(225, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2);
+        draw_object(TABLEOFF2, true);
     glPopMatrix();
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, pocket_ambient_material);
@@ -450,13 +506,41 @@ void drawTable(){
 	glMaterialf(GL_FRONT, GL_SHININESS, base_shininess);
     //Osnova stola
     glPushMatrix();
-        glTranslated(0, 0, (tableHeight - TABLEOFF2)/2);
-        glScaled(0.8*tableWidth, 0.8*tableLength, tableHeight - TABLEOFF2);
-        glColor3f(0.48,0.46,0.4);
+        glTranslated(0, 0, tableHeight*7/8 - TABLEOFF2);
+        glScaled(0.8*tableWidth, 0.8*tableLength, (tableHeight + TABLEOFF2)/4);
         glutSolidCube(1);
-        glColor3f(0, 0, 0);
-        glutWireCube(1);
-    glPopMatrix(); 
+    glPopMatrix();  
+
+   /*  glEnable(GL_COLOR_MATERIAL);
+        double r = 1.5*ballRadius;
+        //cout << tableEdgeLeft *0.6 << ", " << tableEdgeRight*0.6 << endl;
+        glColor3f(0.2, 0.1, 0.2);
+        glPushMatrix();
+            glTranslated(tableEdgeLeft*0.6 + r, tableEdgeUp*0.75 - r, 0);
+            glScaled(r, r, 1);
+            draw_object(tableHeight-1, false);
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslated(tableEdgeRight*0.6 - r, tableEdgeUp*0.75 - r, 0);
+            glScaled(r, r, 1);
+            draw_object(tableHeight-1, false);
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslated(tableEdgeLeft*0.6 + r, tableEdgeDown*0.75 + r, 0);
+            glScaled(r, r, 1);
+            draw_object(tableHeight-1, false);
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslated(tableEdgeRight*0.6 - r, tableEdgeDown*0.75 + r, 0);
+            glScaled(r, r, 1);
+            draw_object(tableHeight-1, false);
+        glPopMatrix();
+
+    glDisable(GL_COLOR_MATERIAL);
+ */
 
     //Tacke kod bele i crne
     glDisable(GL_LIGHTING);
@@ -474,6 +558,58 @@ void drawTable(){
         glPopMatrix();
     glEnable(GL_LIGHTING);
 }
+//Iscrtava ambijent (sobu)
+void drawAmbient(){
+    //glDisable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    
+    /* glBegin(GL_POLYGON);
+        //KROV:
+        glVertex3d(-ambientWidth, +ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, +ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, -ambientLength, +ambientHeight);
+        glVertex3d(-ambientWidth, -ambientLength, +ambientHeight);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+        //ZID1
+        glVertex3d(-ambientWidth, +ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, +ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, +ambientLength, 0);
+        glVertex3d(-ambientWidth, +ambientLength, 0);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+        //ZID2
+        glVertex3d(-ambientWidth, -ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, -ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, -ambientLength, 0);
+        glVertex3d(-ambientWidth, -ambientLength, 0);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+        //ZID3
+        glVertex3d(+ambientWidth, -ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, +ambientLength, +ambientHeight);
+        glVertex3d(+ambientWidth, -ambientLength, 0);
+        glVertex3d(+ambientWidth, -ambientLength, 0);
+    glEnd(); */
+    glColor3f(0.3, 0.8, 0.5);
+    glPushMatrix();
+        glTranslated(0, 0, ambientHeight/2);
+        glScaled(ambientWidth*2, ambientLength*2, ambientHeight);
+        glutSolidCube(1);
+        glColor3f(0, 0, 0);
+        glLineWidth(5);
+        glScaled(0.98, 0.98, 0.98);
+        glutWireCube(1);
+    glPopMatrix();
+    glDisable(GL_COLOR_MATERIAL);
+    //glEnable(GL_LIGHTING);
+    
+    
+    
+}
 //Iscrtava one kugle koje su trenutno aktivne, tj nisu ubacene u rupu
 void drawBalls(){
     glTranslated(0, 0,tableHeight + ballRadius);
@@ -481,7 +617,6 @@ void drawBalls(){
         if(b.getOnTable()) b.drawSelf();
     }
     glTranslated(0, 0, - tableHeight - ballRadius);
-
 }
 //Iscrtavanje nisana
 void drawAim(){
@@ -583,6 +718,7 @@ void drawHud(){
     glPopMatrix();
 }
 
+
 // =================== INITIALIZING FUNCTIONS ===================
 
 //Samo ime kaze, inicijalizacija svega
@@ -595,6 +731,8 @@ void initAll(double tl){--
     tableEdgeDown = - tableEdgeUp;
     tableEdgeRight = tableWidth/2;
     tableEdgeLeft = -tableEdgeRight;
+
+    
 
     if(GAMEMODE == 1){
         ballRadius = tableLength * 0.007293693;
@@ -612,29 +750,30 @@ void initAll(double tl){--
 
 
     camR = tableLength;
-    camTheta = 1;
+    camTheta = -M_PI_2;
     camRho = 1;
 
-    Rlimit[0] = ballRadius;
-    Rlimit[1] = 2*tableLength;
-    RhoLimit[0] = TWENTY_DEGREES; 
-    RhoLimit[1] = NINETY_DEGREES; 
+    setStandardLimitsAndVals();
+
+    ambientLength = Rlimit[1]*1.2;
+    ambientWidth =  Rlimit[1]*1.2;
+    ambientHeight = tableHeight + Rlimit[1];
 
     shotStrength = 1.9;
-    Slimit[0] = 0.1;
-    Slimit[1] = 3.9;
+    
 
     deltaTheta = .02;
     fineTune = false;
     
     fillCluster();
+
+
     
 }
 //Popunjavanje vektora balls kuglama sa pozicijama na pocetku bilijarske igre (trougao)
 void fillCluster(){
-    balls.clear();
+    balls.clear(); 
     balls.push_back(Ball(Vec2(0, tableEdgeDown/2), Vec2(0, 0), ballRadius, 1, 1, 1, 0));
-
     double currentY = tableEdgeUp/3;
     double dy = 2*ballRadius;
     int numInRow = 1;
@@ -663,6 +802,7 @@ void fillCluster(){
             
             
             balls.push_back(Ball(Vec2(currentX, currentY + ballRadius/5), Vec2(0, 0), ballRadius, r, g, b, ballId++));
+            
             currentX += 2*ballRadius;
         }
         numInRow++;
@@ -686,9 +826,11 @@ void setStandardLimitsAndVals(){
     camRho = FOURTY_FIVE_DEGREES;
     camR = tableLength;
     Rlimit[0] = ballRadius;
-    Rlimit[1] = 2*tableLength;
+    Rlimit[1] = 1.2*tableLength;
     RhoLimit[0] = TWENTY_DEGREES;
     RhoLimit[1] = NINETY_DEGREES;
+    Slimit[0] = 0.1;
+    Slimit[1] = 3.9;
 }
 void setShotModeLimitsAndVals(){
     camRho = NINETY_DEGREES - TWENTY_DEGREES;
@@ -728,4 +870,10 @@ string getFineTuneString(){
 string getShotModeString(){
     if(inShotMode) return "(   X   ) Shot mode: ON";
     return "(   X   ) Shot mode: OFF";
+}
+
+// =================== THREAD FUNCTIONS ===================
+
+void oneToAllCollision(int idx){
+
 }

@@ -2,10 +2,14 @@
 #include <GL/glut.h>
 #include <bitset>
 #include <math.h>
+#include <pthread.h>
 
 using namespace std;
 #ifndef BALL_H
 #define BALL_H
+
+#define NUM_SLICES (20)
+#define NUM_STACKS (20)
 class Ball{
 
     private:
@@ -31,7 +35,12 @@ class Ball{
          * */
         unsigned int bmaskTurnOn;
         unsigned int bmaskTurnOff;
+
+        int idx;
         
+        static double epsSpeedIntensity;
+
+        pthread_mutex_t MYLOCK;
     public:
 
         // === KONSTRUKTORI ===
@@ -41,23 +50,32 @@ class Ball{
         // === GETERI, SETERI I SL
         Vec2 getPosition();
         void setPosition(Vec2);
+
         Vec2 getVelocity();
         void setVelocity(Vec2);
+
         bool isActive();
+
         bool getMoving();
         void setMoving(bool);
+
         unsigned int getBitMaskTurnOn();
+
         bool getOnTable();
         bool setOnTable(bool);
+
         void dieCompletely(unsigned int *);
+        int getIdx();
+        
 
         // === PAMETNE METODE ===
         void drawSelf();
         void updateSelf(unsigned int *);
         void cushionCollide(double, double, double, double);
-        void collideWith(Ball &);    
+        bool collideWith(Ball & b);
         bool pocketCollide(double limUp, double limDown, double limLeft, double limRight, double pocketRadius);
         
+
         // === DEBUG METODE ===
         string toString(); 
           
