@@ -19,7 +19,25 @@
     #define FOURTY_FIVE_DEGREES (0.785398)
     #define TWENTY_DEGREES (0.349066)
     #define FIVE_DEGREES (0.0872665)
-    #define PI (3.1415926535)
+
+
+    #define PI (3.14159265359)
+    #define MINPI (-3.14159265359)
+
+    #define TWOPI (6.28318530718)
+    #define MINTWOPI (-6.28318530718)
+
+    #define PITWO (1.57079632679)
+    #define MINPITWO (-1.57079632679)
+
+    #define PIFOUR (0.78539816339)
+    #define FIVEPIFOUR (3.92699081699)
+
+    #define TRHEEPIFOUR (2.35619449019)
+    #define SEVENPIFOUR (5.49778714378)
+
+
+
 
     #define POCKET_TOLERANCE (2)
     
@@ -31,6 +49,8 @@
     static const double tableRatio = 0.5;
     static const int tableHeight = 73;
 
+    const double shotModeCamRho = NINETY_DEGREES - TWENTY_DEGREES;
+    double shotModeCamR;
     
 
     /**
@@ -97,6 +117,13 @@
     bool fineTune = false;
     bool fullScreen = true;
     bool controlLock = false;
+
+    double pillarConst1;
+
+    double pillarConstA1;
+    double pillarConstA2;
+    double pillarConstB1;
+    double pillarConstB2;
 
     /**
      * 

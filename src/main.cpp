@@ -48,6 +48,8 @@ vector<Ball>balls;
 //Blokira opasne operacije kod kugli prilikom detekcije kolizija (valjda samo setVelocity, provericu da li je jos nesto opasno)
 static GLuint names[2];
 
+GLUquadric* asd = gluNewQuadric();
+
 // =================== EVENT FUNCTIONS ===================
 static void on_display(void);
 static void on_reshape(int, int);
@@ -150,6 +152,8 @@ int main(int argc, char ** argv){
 
 // =================== EVENT FUNCTIONS ==================
 
+int closeUpAnimParam = 0;
+
 static void on_display(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -247,7 +251,11 @@ static void on_keyboard(unsigned char c,int x, int y){
             case 'X':
                 if(anyBallsMoving()) break;
                 if(!inShotMode){
+                    //controlLock = true;
                     inShotMode = true;
+                    closeUpAnimParam = 0;
+                    glutTimerFunc(ANIMATE_STARTING_SHOT_INTERVAL, mainTimerCallBack, ANIMATE_STARTING_SHOT);
+
                     setShotModeLimitsAndVals();
                 }else{
                     inShotMode = false;
@@ -344,7 +352,19 @@ void mainTimerCallBack(int arg){
 
 
         case ANIMATE_STARTING_SHOT:
-            
+            if (closeUpAnimParam < 100){
+                double cueballX = balls[0].getPosition().x;
+                double cueballY = balls[0].getPosition().y;
+
+                //lookingAtX = 
+
+
+
+            }else{
+                closeUpAnimParam = 0;
+                controlLock = false;
+                setShotModeLimitsAndVals();    
+            }
             break;
     }
 }
@@ -399,6 +419,7 @@ void drawTable(){
 	glMaterialfv(GL_FRONT, GL_SPECULAR, pocket_specular_material);
 
     //Rupe
+    //==========================RUPE======================
     glPushMatrix();
         glTranslated(0, 0, tableHeight+0.1);
         glPushMatrix();
@@ -445,7 +466,7 @@ void drawTable(){
         glTranslated(tableEdgeLeft - pocketRadius/2, 0, tableHeight); 
         //glRotated(180, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_cylinder2(TABLEOFF2, PI, 2*PI, true);
+        draw_cylinder2(TABLEOFF2, PI, TWOPI, true);
     glPopMatrix();
 
     glPushMatrix();
@@ -459,34 +480,35 @@ void drawTable(){
         glTranslated(tableEdgeLeft, tableEdgeUp, tableHeight); 
         //glRotated(135, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_cylinder2(TABLEOFF2, -PI, PI/2, true);
+        draw_cylinder2(TABLEOFF2, MINPI, PITWO, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight, tableEdgeUp, tableHeight); 
         //glRotated(45, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_cylinder2(TABLEOFF2, -PI/2, PI ,true);
+        draw_cylinder2(TABLEOFF2, MINPITWO, PI ,true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight, tableEdgeDown, tableHeight); 
         //glRotated(315, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_cylinder2(TABLEOFF2, +PI/4, 5*PI/4, true);
+        draw_cylinder2(TABLEOFF2, PIFOUR, FIVEPIFOUR, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeLeft, tableEdgeDown, tableHeight); 
         //glRotated(225, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_cylinder2(TABLEOFF2, 3*PI/4, 7*PI/4, true);
-    glPopMatrix();
+        draw_cylinder2(TABLEOFF2, TRHEEPIFOUR, SEVENPIFOUR, true);
+    glPopMatrix(); 
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, pocket_ambient_material);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, pocket_diffuse_material);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, pocket_specular_material);
-    //Mantinele
+
+     //Mantinele
     glPushMatrix();
         glTranslated(0, tableEdgeUp + TABLEOFF1, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
         glScaled(tableWidth - POCKET_TOLERANCE*pocketRadius, TABLEOFF2, TABLEOFF2); 
@@ -516,7 +538,7 @@ void drawTable(){
         glTranslated(tableEdgeLeft - TABLEOFF1, -tableEdgeUp/2, tableHeight + TABLEOFF1); //Translacija na odgovarajucu visinu
         glScaled(TABLEOFF2, tableLength/2 - POCKET_TOLERANCE*pocketRadius, TABLEOFF2); 
         glutSolidCube(1);
-    glPopMatrix();
+    glPopMatrix(); 
     
 
 	glMaterialfv(GL_FRONT, GL_AMBIENT, base_ambient_material);
@@ -530,36 +552,43 @@ void drawTable(){
         glutSolidCube(1);
     glPopMatrix();  
 
-   /*  glEnable(GL_COLOR_MATERIAL);
-        double r = 1.5*ballRadius;
+
+    //=======================NOGARI==========================================
+    glDisable(GL_LIGHTING);
+        
         //cout << tableEdgeLeft *0.6 << ", " << tableEdgeRight*0.6 << endl;
         glColor3f(0.2, 0.1, 0.2);
         glPushMatrix();
-            glTranslated(tableEdgeLeft*0.6 + r, tableEdgeUp*0.75 - r, 0);
-            glScaled(r, r, 1);
-            draw_cylinder(tableHeight-1, false);
+            glTranslated(pillarConstA1, pillarConstB1, 0);
+            //glScaled(pillarConst1, pillarConst1, 1);
+            //draw_cylinder(tableHeight-1, false);
+            gluCylinder(asd, pillarConst1, pillarConst1, tableHeight-1, 20, 20);
         glPopMatrix();
 
         glPushMatrix();
-            glTranslated(tableEdgeRight*0.6 - r, tableEdgeUp*0.75 - r, 0);
-            glScaled(r, r, 1);
-            draw_cylinder(tableHeight-1, false);
+            glTranslated(pillarConstA2, pillarConstB1, 0);
+            //glScaled(pillarConst1, pillarConst1, 1);
+            //draw_cylinder(tableHeight-1, false);
+            gluCylinder(asd, pillarConst1, pillarConst1, tableHeight-1, 20, 20);
         glPopMatrix();
 
         glPushMatrix();
-            glTranslated(tableEdgeLeft*0.6 + r, tableEdgeDown*0.75 + r, 0);
-            glScaled(r, r, 1);
-            draw_cylinder(tableHeight-1, false);
+            glTranslated(pillarConstA1, pillarConstB2, 0);
+            //glScaled(pillarConst1, pillarConst1, 1);
+            //draw_cylinder(tableHeight-1, false);
+            gluCylinder(asd, pillarConst1, pillarConst1, tableHeight-1, 20, 20);
         glPopMatrix();
 
         glPushMatrix();
-            glTranslated(tableEdgeRight*0.6 - r, tableEdgeDown*0.75 + r, 0);
-            glScaled(r, r, 1);
-            draw_cylinder(tableHeight-1, false);
+            glTranslated(pillarConstA2, pillarConstB2, 0);
+            //glScaled(pillarConst1, pillarConst1, 1);
+            //draw_cylinder(tableHeight-1, false);
+            gluCylinder(asd, pillarConst1, pillarConst1, tableHeight-1, 20, 20);
         glPopMatrix();
 
-    glDisable(GL_COLOR_MATERIAL);
- */
+    glEnable(GL_LIGHTING); 
+
+
 
     //Tacke kod bele i crne
     glDisable(GL_LIGHTING);
@@ -785,6 +814,15 @@ void initAll(double tl){--
     deltaTheta = .02;
     fineTune = false;
     
+    /* shotModeCamRho = NINETY_DEGREES - TWENTY_DEGREES; */
+    shotModeCamR = 16*ballRadius;
+
+    pillarConst1 = 1.5*ballRadius;
+    pillarConstA1 = tableEdgeLeft*0.6 + pillarConst1;
+    pillarConstA2 = tableEdgeRight*0.6 - pillarConst1;
+    pillarConstB1 = tableEdgeUp*0.75 - pillarConst1;
+    pillarConstB2 = tableEdgeDown*0.75 + pillarConst1;
+
     fillCluster();
 
 
