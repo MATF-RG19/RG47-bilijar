@@ -7,6 +7,9 @@
     #define REDRRAW_BALLS (0)
     #define REDRRAW_BALLS_INTERVAL (15)
 
+    #define ANIMATE_STARTING_SHOT (1)
+    #define ANIMATE_STARTING_SHOT_INTERVAL (16)
+
     #define TABLEOFF1 (2)
     #define TABLEOFF2 (4)
 
@@ -16,12 +19,14 @@
     #define FOURTY_FIVE_DEGREES (0.785398)
     #define TWENTY_DEGREES (0.349066)
     #define FIVE_DEGREES (0.0872665)
+    #define PI (3.1415926535)
 
     #define POCKET_TOLERANCE (2)
     
     #define CLOTH_TEXTURE_PATH "cloth_text.bmp"
     double wwidth;
     double wheight;
+    double theRatio;
 
     static const double tableRatio = 0.5;
     static const int tableHeight = 73;
@@ -91,6 +96,7 @@
     bool inShotMode = false;
     bool fineTune = false;
     bool fullScreen = true;
+    bool controlLock = false;
 
     /**
      * 

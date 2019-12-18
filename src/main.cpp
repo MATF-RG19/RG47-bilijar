@@ -22,19 +22,31 @@ using namespace std;
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ DEKLARACIJE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+struct collCache{
+    Vec2 old1;
+    Vec2 old2;
+    Vec2 new1;
+    Vec2 new2;
+    collCache(){
+
+    }
+    collCache(Vec2 _old1, Vec2 _old2, Vec2 _new1, Vec2 _new2){
+        this->old1 = _old1;
+        this->old2 = _old2;
+
+        this->new1 = _new1;
+        this->new2 = _new2;
+    }
+};
+#define OUTPATH ("caches.pool")
+
+vector<collCache>caches;
+
+
 //Vektor koji sadrzi kugle
 vector<Ball>balls;       
 //Blokira opasne operacije kod kugli prilikom detekcije kolizija (valjda samo setVelocity, provericu da li je jos nesto opasno)
 static GLuint names[2];
-
-
-
-void * handleCollision(int i);
-
-long skipped = 0;
-long total = 0;
-
-
 
 // =================== EVENT FUNCTIONS ===================
 static void on_display(void);
@@ -74,7 +86,7 @@ string getShotModeString();
 int main(int argc, char ** argv){
 
     cout << getpid() << endl;    
-
+    cout << sizeof(double) << endl;
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
@@ -143,7 +155,7 @@ static void on_display(){
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60, wwidth/wheight, 1, 800); 
+    gluPerspective(60, theRatio, 1, 800); 
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -151,7 +163,7 @@ static void on_display(){
     directCamera();
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     drawTable();      
-    //drawAmbient();
+    drawAmbient();
     drawBalls();
     if(inShotMode) drawAim();
 
@@ -161,123 +173,127 @@ static void on_display(){
 static void on_reshape(int x, int y){
     wwidth = x;
     wheight = y;
+    theRatio = wwidth/wheight;
     glViewport(0, 0, x, y);
     glutPostRedisplay();
 }
 static void on_keyboard(unsigned char c,int x, int y){
-    switch (c){
-        case 27:
-            exit(1);
-            break;
-        case 'A':
-        case 'a':
-            camTheta -= deltaTheta;
-            glutPostRedisplay();
-            break;
-        case 'D':
-        case 'd':
-            camTheta += deltaTheta;
-            glutPostRedisplay();
-            break;
-        case 'W':
-        case 'w':
-            if(withinBounds(&camRho, RhoLimit)){
-                camRho -= .02;
-            }else{
-            }
-            glutPostRedisplay();
-            break;
-        case 'S':
-        case 's':
-            if(withinBounds(&camRho, RhoLimit)){
-                camRho += .02;
-            }else{
-            }
-            glutPostRedisplay();
-            break;
-        case 'I':
-        case 'i':
-            if(withinBounds(&camR, Rlimit)){
-                camR -= ballRadius;
-            }
-            glutPostRedisplay();
-            break;
-        case 'K':
-        case 'k':
-            if(withinBounds(&camR, Rlimit)){
-                camR += ballRadius;
-            }
-            glutPostRedisplay();
-            
-            break;
-        case '+':
-            if(shotStrength < Slimit[1]){
-                shotStrength += 0.1;
+    if (!controlLock){
+        switch (c){
+            case 27:
+                exit(1);
+                break;
+            case 'A':
+            case 'a':
+                camTheta -= deltaTheta;
                 glutPostRedisplay();
-            }
-            break;
-        case '-':
-            if(shotStrength > Slimit[0]){
-                shotStrength -= 0.1;
+                break;
+            case 'D':
+            case 'd':
+                camTheta += deltaTheta;
                 glutPostRedisplay();
-            }
-            break;
-        case 'N':
-        case 'n':
-            if(anyBallsMoving()) break;
-            fillCluster();
-            inShotMode = false;
-            break;
-
-        case 'x':
-        case 'X':
-            if(anyBallsMoving()) break;
-            if(!inShotMode){
-                inShotMode = true;
-                setShotModeLimitsAndVals();
-            }else{
-                inShotMode = false;
-                setStandardLimitsAndVals();
-                if(fineTune){
-                    toggleFineTune();
+                break;
+            case 'W':
+            case 'w':
+                if(withinBounds(&camRho, RhoLimit)){
+                    camRho -= .02;
+                }else{
                 }
-            }
-            glutPostRedisplay();
-            break;
-        case 'f':
-        case 'F':
-            if(!inShotMode && !fineTune) break;
-            toggleFineTune();
-            glutPostRedisplay();
-            break;
-        case 'p':
-        case 'P':
-            if(fullScreen){
-                fullScreen = false;
-                glutReshapeWindow(1000, 1000);
-            }else{
-                fullScreen = true;
-                glutFullScreen();
-            }
-            break;
-        case 'H':
-        case 'h':
-            if(!inShotMode) break;
-            if(anyBallsMoving()) break;
+                glutPostRedisplay();
+                break;
+            case 'S':
+            case 's':
+                if(withinBounds(&camRho, RhoLimit)){
+                    camRho += .02;
+                }else{
+                }
+                glutPostRedisplay();
+                break;
+            case 'I':
+            case 'i':
+                if(withinBounds(&camR, Rlimit)){
+                    camR -= ballRadius;
+                }
+                glutPostRedisplay();
+                break;
+            case 'K':
+            case 'k':
+                if(withinBounds(&camR, Rlimit)){
+                    camR += ballRadius;
+                }
+                glutPostRedisplay();
+                
+                break;
+            case '+':
+                if(shotStrength < Slimit[1]){
+                    shotStrength += 0.1;
+                    glutPostRedisplay();
+                }
+                break;
+            case '-':
+                if(shotStrength > Slimit[0]){
+                    shotStrength -= 0.1;
+                    glutPostRedisplay();
+                }
+                break;
+            case 'N':
+            case 'n':
+                if(anyBallsMoving() || inShotMode) break;
+                fillCluster();
+                inShotMode = false;
+                break;
+
+            case 'x':
+            case 'X':
+                if(anyBallsMoving()) break;
+                if(!inShotMode){
+                    inShotMode = true;
+                    setShotModeLimitsAndVals();
+                }else{
+                    inShotMode = false;
+                    setStandardLimitsAndVals();
+                    if(fineTune){
+                        toggleFineTune();
+                    }
+                }
+                glutPostRedisplay();
+                break;
+            case 'f':
+            case 'F':
+                if(!inShotMode && !fineTune) break;
+                toggleFineTune();
+                glutPostRedisplay();
+                break;
+            case 'p':
+            case 'P':
+                if(fullScreen){
+                    fullScreen = false;
+                    glutReshapeWindow(1000, 1000);
+                }else{
+                    fullScreen = true;
+                    glutFullScreen();
+                }
+                break;
+            case 'H':
+            case 'h':
+                if(!inShotMode) break;
+                if(anyBallsMoving()) break;
+                
+                inShotMode = false;
+
+                setStandardLimitsAndVals();
+
+                if(fineTune) toggleFineTune();
+
+                Vec2 shotDir = getViewDirection();
+                shotDir.mult(shotStrength*ballRadius);
+
+                balls[0].setVelocity(shotDir);
+                caches.clear();
+                glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, REDRRAW_BALLS);
+                break;
             
-            inShotMode = false;
-
-            setStandardLimitsAndVals();
-
-            if(fineTune) toggleFineTune();
-
-            Vec2 shotDir = getViewDirection();
-            shotDir.mult(shotStrength*ballRadius);
-
-            balls[0].setVelocity(shotDir);
-            glutTimerFunc(REDRRAW_BALLS_INTERVAL, mainTimerCallBack, REDRRAW_BALLS);
-            break;
-        
+        }
     }
 }
 
@@ -301,10 +317,7 @@ void mainTimerCallBack(int arg){
                     balls[i].updateSelf(&activityCheck);
 
 
-                }else{
-                    skipped++;
                 }
-                total++;
             }
             
             glutPostRedisplay();
@@ -326,6 +339,12 @@ void mainTimerCallBack(int arg){
                 if(fill) fillCluster();
                 
             }
+            break;
+
+
+
+        case ANIMATE_STARTING_SHOT:
+            
             break;
     }
 }
@@ -424,44 +443,44 @@ void drawTable(){
 
     glPushMatrix();
         glTranslated(tableEdgeLeft - pocketRadius/2, 0, tableHeight); 
-        glRotated(180, 0, 0, 1);
+        //glRotated(180, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2, true);
+        draw_cylinder2(TABLEOFF2, PI, 2*PI, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight + pocketRadius/2, 0, tableHeight); 
         //glRotated(180, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2, true);
+        draw_cylinder2(TABLEOFF2, 0, PI, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeLeft, tableEdgeUp, tableHeight); 
-        glRotated(135, 0, 0, 1);
+        //glRotated(135, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2, true);
+        draw_cylinder2(TABLEOFF2, -PI, PI/2, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight, tableEdgeUp, tableHeight); 
-        glRotated(45, 0, 0, 1);
+        //glRotated(45, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2, true);
+        draw_cylinder2(TABLEOFF2, -PI/2, PI ,true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeRight, tableEdgeDown, tableHeight); 
-        glRotated(315, 0, 0, 1);
+        //glRotated(315, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2, true);
+        draw_cylinder2(TABLEOFF2, +PI/4, 5*PI/4, true);
     glPopMatrix();
 
     glPushMatrix();
         glTranslated(tableEdgeLeft, tableEdgeDown, tableHeight); 
-        glRotated(225, 0, 0, 1);
+        //glRotated(225, 0, 0, 1);
         glScaled(pocketRadius, pocketRadius, 1);
-        draw_object(TABLEOFF2, true);
+        draw_cylinder2(TABLEOFF2, 3*PI/4, 7*PI/4, true);
     glPopMatrix();
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, pocket_ambient_material);
@@ -518,25 +537,25 @@ void drawTable(){
         glPushMatrix();
             glTranslated(tableEdgeLeft*0.6 + r, tableEdgeUp*0.75 - r, 0);
             glScaled(r, r, 1);
-            draw_object(tableHeight-1, false);
+            draw_cylinder(tableHeight-1, false);
         glPopMatrix();
 
         glPushMatrix();
             glTranslated(tableEdgeRight*0.6 - r, tableEdgeUp*0.75 - r, 0);
             glScaled(r, r, 1);
-            draw_object(tableHeight-1, false);
+            draw_cylinder(tableHeight-1, false);
         glPopMatrix();
 
         glPushMatrix();
             glTranslated(tableEdgeLeft*0.6 + r, tableEdgeDown*0.75 + r, 0);
             glScaled(r, r, 1);
-            draw_object(tableHeight-1, false);
+            draw_cylinder(tableHeight-1, false);
         glPopMatrix();
 
         glPushMatrix();
             glTranslated(tableEdgeRight*0.6 - r, tableEdgeDown*0.75 + r, 0);
             glScaled(r, r, 1);
-            draw_object(tableHeight-1, false);
+            draw_cylinder(tableHeight-1, false);
         glPopMatrix();
 
     glDisable(GL_COLOR_MATERIAL);
@@ -612,8 +631,10 @@ void drawAmbient(){
 }
 //Iscrtava one kugle koje su trenutno aktivne, tj nisu ubacene u rupu
 void drawBalls(){
+    pthread_t tids[16];
+
     glTranslated(0, 0,tableHeight + ballRadius);
-    for(Ball b: balls){   
+    for(Ball b:balls){
         if(b.getOnTable()) b.drawSelf();
     }
     glTranslated(0, 0, - tableHeight - ballRadius);
@@ -653,8 +674,7 @@ void drawAim(){
     //glDisable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
 }
-//Pomocna funkcija za crtanje koordinatnog sistema.
-//Verovatno ce biti izbrisana do finalne verzije
+//Pomocna funkcijdobijemo isto ovakvi izbrisana do finalne verzije
 void drawCoord(){
     glLineWidth(1);
     glColor3f(0, 0, 1.0);
@@ -698,8 +718,8 @@ void drawHud(){
     glLoadIdentity();
     glColor3f(1, 1, 1);
     
-    //glDisable(GL_LIGHTING);
-    glEnable(GL_COLOR_MATERIAL);
+    glDisable(GL_LIGHTING);
+    
         output(-0.99, 0.97, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getShotStrengthString());
         output(-0.99, 0.92, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, getShotModeString());
 
@@ -713,8 +733,8 @@ void drawHud(){
         }else{
             output(-0.99, -0.97, 0, 0, 0, GLUT_BITMAP_HELVETICA_18, "(   P   ) Exit fullscreen");
         }
-    glDisable(GL_COLOR_MATERIAL);
-    //glEnable(GL_LIGHTING);
+    
+    glEnable(GL_LIGHTING);
     glPopMatrix();
 }
 
@@ -802,7 +822,6 @@ void fillCluster(){
             
             
             balls.push_back(Ball(Vec2(currentX, currentY + ballRadius/5), Vec2(0, 0), ballRadius, r, g, b, ballId++));
-            
             currentX += 2*ballRadius;
         }
         numInRow++;
@@ -873,7 +892,3 @@ string getShotModeString(){
 }
 
 // =================== THREAD FUNCTIONS ===================
-
-void oneToAllCollision(int idx){
-
-}

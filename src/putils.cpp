@@ -72,10 +72,8 @@ void set_normal_and_vertex(float u, float v){
             u
         );
 }
-void draw_object(double height, bool half){
+void draw_cylinder(double height,  bool half){
     float u, v;
-
-    glPushMatrix();
 
     float lim = half?PI:2*PI;
 
@@ -90,5 +88,21 @@ void draw_object(double height, bool half){
         glEnd();
     }
 
-    glPopMatrix();
+}
+
+void draw_cylinder2(double height, double angleStart, double angleEnd, bool half){
+    float u, v;
+
+    float lim = half?PI:2*PI;
+
+    /* Crtamo objekat strip po strip */
+    // TODO: Ovako je ispravno :)
+    for (u = 0; u < height; u += PI / 20) {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (v = angleStart; v <= angleEnd + EPSILON; v += PI / 20) {
+            set_normal_and_vertex(u, v);
+            set_normal_and_vertex(u + PI / 20, v);
+        }
+        glEnd();
+    }
 }

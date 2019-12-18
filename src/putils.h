@@ -14,5 +14,6 @@ bool circleDrop(double bigX, double bigY, double bigRadius, double smallX, doubl
 //Pomocna za crtanje cilindra
 void set_normal_and_vertex(float u, float v);
 //Crtanje cilindra
-void draw_object(double height, bool);
+void draw_cylinder(double height, bool);
+void draw_cylinder2(double height, double angleStart, double angleEnd, bool half);
 #endif
