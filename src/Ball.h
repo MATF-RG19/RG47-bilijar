@@ -50,7 +50,8 @@ class Ball{
         // === GETERI, SETERI I SL
         Vec2 getPosition();
         void setPosition(Vec2);
-
+        void setPosition(double, double);
+        
         Vec2 getVelocity();
         void setVelocity(Vec2);
 
@@ -71,7 +72,7 @@ class Ball{
         // === PAMETNE METODE ===
         void drawSelf();
         void updateSelf(unsigned int *);
-        void cushionCollide(double, double, double, double);
+        bool cushionCollide(double, double, double, double);
         bool collideWith(Ball & b);
         bool pocketCollide(double limUp, double limDown, double limLeft, double limRight, double pocketRadius);
         

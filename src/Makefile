@@ -1,7 +1,8 @@
 CC=g++
+PROGRAM = pool
 
 pool: main.o Vec2.o Ball.o putils.o image.o
-	$(CC) -o pool main.o Vec2.o Ball.o putils.o image.o -lGL -lGLU -lglut -lm -lpthread
+	$(CC) -o $(PROGRAM) main.o Vec2.o Ball.o putils.o image.o -lGL -lGLU -lglut -lm -lpthread
 
 main.o: main.cpp shconsts.h
 	$(CC) -c main.cpp shconsts.h
@@ -17,3 +18,6 @@ putils.o: putils.cpp putils.h
 
 image.o: image.cpp image.h
 	$(CC) -c image.h image.cpp
+
+run: $(PROGRAM)
+	./$(PROGRAM)

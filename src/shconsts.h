@@ -36,12 +36,17 @@
     #define TRHEEPIFOUR (2.35619449019)
     #define SEVENPIFOUR (5.49778714378)
 
-
-
-
     #define POCKET_TOLERANCE (2)
     
     #define CLOTH_TEXTURE_PATH "cloth_text.bmp"
+
+
+    #define CTL_MODE_REGULAR (0)
+    #define CTL_MODE_PLACE_CUEBALL (1)
+
+    int controlMode = CTL_MODE_REGULAR;
+    double controlModeDelta;
+
     double wwidth;
     double wheight;
     double theRatio;
@@ -125,6 +130,14 @@
     double pillarConstB1;
     double pillarConstB2;
 
+    double tableBasisScaleX;
+    double tableBasisScaleY;
+    double tableBasisScaleZ;
+
+    double tableBasisShiftZ;
+
+
+    double persp;
     /**
      * 
      * Koristi se za proveru da li se bilo koja kugla trenutno krece da bi se znalo
