@@ -13,6 +13,8 @@
 #include "shconsts.h"
 #include "image.h"
 
+#include "Game.h"
+
 using namespace std;
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ DEKLARACIJE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -841,112 +843,13 @@ void drawCueballIndicator(){
 //Samo ime kaze, inicijalizacija svega
 void initAll(double tl){--
     
-    tableLength = tl;
-    tableWidth = tableLength * tableRatio;
     
-    tableEdgeUp = tableLength/2;
-    tableEdgeDown = - tableEdgeUp;
-    tableEdgeRight = tableWidth/2;
-    tableEdgeLeft = -tableEdgeRight;
-
-    
-
-    if(GAMEMODE == 1){
-        ballRadius = tableLength * 0.007293693;
-        pocketRadius = 2*ballRadius;
-    }else{
-        ballRadius = tableLength * 0.02182285/2;
-        pocketRadius = 2.3*ballRadius;
-    }    
-
-
-    ballLimUp = tableEdgeUp - ballRadius;
-    ballLimDown = tableEdgeDown + ballRadius;
-    ballLimLeft = tableEdgeLeft + ballRadius;
-    ballLimRight = tableEdgeRight - ballRadius;
-
-
-    camR = tableLength;
-    camTheta = -M_PI_2;
-    camRho = 1;
-
-    setStandardLimitsAndVals();
-
-    ambientLength = Rlimit[1]*1.2;
-    ambientWidth =  Rlimit[1]*1.2;
-    ambientHeight = tableHeight + Rlimit[1];
-
-    persp = 3*ambientWidth;
-
-    shotStrength = 1.9;
-    
-
-    deltaTheta = .02;
-    fineTune = false;
-    
-    shotModeCamR = 16*ballRadius;
-
-    pillarConst1 = 1.5*ballRadius;
-    pillarConstA1 = tableEdgeLeft*0.8 + pillarConst1;
-    pillarConstA2 = tableEdgeRight*0.8 - pillarConst1;
-    pillarConstB1 = tableEdgeUp*0.75 - pillarConst1;
-    pillarConstB2 = tableEdgeDown*0.75 + pillarConst1;
-
-    tableBasisScaleX = 0.8*tableWidth;
-    tableBasisScaleY = 0.8*tableLength;
-    tableBasisScaleZ = (tableHeight + TABLEOFF2)/4;
-
-    tableBasisShiftZ = tableHeight*7/8 - TABLEOFF2;
-
-    toCtlModePlaceCueball();
-
-    controlModeDelta = ballRadius/2;
-    fillCluster();
 
 
     
 }
 //Popunjavanje vektora balls kuglama sa pozicijama na pocetku bilijarske igre (trougao)
-void fillCluster(){
-    balls.clear(); 
-    balls.push_back(Ball(Vec2(0, tableEdgeDown/2), Vec2(0, 0), ballRadius, 1, 1, 1, 0));
-    double currentY = tableEdgeUp/3;
-    double dy = 2*ballRadius;
-    int numInRow = 1;
-    int ballId = 1;
-    for(int row = 0; row < 5; row++){
-        
-        double currentX = -row * ballRadius;
-        for(int i = 0; i < numInRow; i++){
-            GLfloat r, g, b;
-            if(ballId == 5){
-                r = 0;
-                g = 0;
-                b = 0;
-            }else{
-                if (ballId % 2 == 0){
-                r = 1;
-                g = 0;
-                b = 0;
-                }else
-                {
-                    r = 0;
-                    g = 0;
-                    b = 1;
-                }
-            }
-            
-            
-            balls.push_back(Ball(Vec2(currentX, currentY + ballRadius/5), Vec2(0, 0), ballRadius, r, g, b, ballId++));
-            currentX += 2*ballRadius;
-        }
-        numInRow++;
-        currentY += dy;
 
-    }
-    glutPostRedisplay();
-
-}
 
 // =================== MISC FUNCTIONS ===================
 bool anyBallsMoving(){
@@ -957,24 +860,7 @@ Vec2 getViewDirection(){
     v.normalize();
     return v;
 }
-void setStandardLimitsAndVals(){
-    camRho = FOURTY_FIVE_DEGREES;
-    camR = tableLength;
-    Rlimit[0] = ballRadius;
-    Rlimit[1] = 1.2*tableLength;
-    RhoLimit[0] = TWENTY_DEGREES;
-    RhoLimit[1] = NINETY_DEGREES;
-    Slimit[0] = 0.1;
-    Slimit[1] = 3.9;
-}
-void setShotModeLimitsAndVals(){
-    camRho = NINETY_DEGREES - TWENTY_DEGREES;
-    camR = 16*ballRadius;
-    Rlimit[0] = 3*ballRadius;
-    Rlimit[1] = 25*ballRadius;
-    RhoLimit[0] = FOURTY_FIVE_DEGREES;
-    RhoLimit[1] = NINETY_DEGREES - FIVE_DEGREES;
-}
+
 void toggleFineTune(){
     if(fineTune){
         fineTune = false;
