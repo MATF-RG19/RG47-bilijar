@@ -7,11 +7,6 @@
 
 #include <GL/glut.h>
 
-#include <pthread.h>
-#include <sched.h>
-
-
-
 #include "Vec2.h"
 #include "Ball.h"
 #include "putils.h"
@@ -259,6 +254,7 @@ static void on_keyboard(unsigned char c,int x, int y){
                 case 'N':
                 case 'n':
                     if(anyBallsMoving() || inShotMode) break;
+                    toCtlModePlaceCueball();
                     fillCluster();
                     inShotMode = false;
                     break;
@@ -399,6 +395,7 @@ void mainTimerCallBack(int arg){
                 }
                 if(fill){
                     fillCluster();
+                    toCtlModePlaceCueball();
                     return;
                 }
 
@@ -859,8 +856,7 @@ void initAll(double tl){--
         pocketRadius = 2*ballRadius;
     }else{
         ballRadius = tableLength * 0.02182285/2;
-        //ballRadius = 2.542362025;
-        pocketRadius = 2.1*ballRadius;
+        pocketRadius = 2.3*ballRadius;
     }    
 
 
@@ -888,7 +884,6 @@ void initAll(double tl){--
     deltaTheta = .02;
     fineTune = false;
     
-    /* shotModeCamRho = NINETY_DEGREES - TWENTY_DEGREES; */
     shotModeCamR = 16*ballRadius;
 
     pillarConst1 = 1.5*ballRadius;
@@ -897,8 +892,6 @@ void initAll(double tl){--
     pillarConstB1 = tableEdgeUp*0.75 - pillarConst1;
     pillarConstB2 = tableEdgeDown*0.75 + pillarConst1;
 
-    /* glTranslated(0, 0, tableHeight*7/8 - TABLEOFF2);
-    glScaled(0.8*tableWidth, 0.8*tableLength, (tableHeight + TABLEOFF2)/4); */
     tableBasisScaleX = 0.8*tableWidth;
     tableBasisScaleY = 0.8*tableLength;
     tableBasisScaleZ = (tableHeight + TABLEOFF2)/4;

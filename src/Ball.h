@@ -1,12 +1,14 @@
-#include "Vec2.h"
-#include <GL/glut.h>
-#include <bitset>
-#include <math.h>
-#include <pthread.h>
-
 using namespace std;
 #ifndef BALL_H
 #define BALL_H
+
+#include <GL/glut.h>
+#include <bitset>
+#include <math.h>
+
+#include "Vec2.h"
+#include "putils.h"
+
 
 #define NUM_SLICES (20)
 #define NUM_STACKS (20)
@@ -38,7 +40,6 @@ class Ball{
 
         int idx;
         
-        static double epsSpeedIntensity;
 
         pthread_mutex_t MYLOCK;
     public:

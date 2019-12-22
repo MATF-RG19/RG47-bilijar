@@ -43,6 +43,7 @@ void drawCircle(double radius){
     }
     glEnd();
 }
+
 void drawEllipse(double a, double b, double t_from, double t_to){
     double deltaT = 0.2;
     while(t_from < t_to){
@@ -64,6 +65,7 @@ bool circleDrop(double bigX, double bigY, double bigRadius, double smallX, doubl
 inline void set_normal_and_vertex(float u, float v){
     // pravilno bi bilo y = 0 za normalu,
     // ovako je render lepsi
+
     glNormal3f(
             sin(v),
             cos(v),
@@ -84,7 +86,7 @@ void draw_cylinder(double height,  bool half){
         glBegin(GL_TRIANGLE_STRIP);
         for (v = 0; v <= lim + EPSILON; v +=pistep) {
             set_normal_and_vertex(u, v);
-            set_normal_and_vertex(u +pistep, v);
+            set_normal_and_vertex(u + pistep, v);
         }
         glEnd();
     }

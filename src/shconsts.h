@@ -50,7 +50,7 @@
     double wwidth;
     double wheight;
     double theRatio;
-
+    
     static const double tableRatio = 0.5;
     static const int tableHeight = 73;
 
@@ -65,14 +65,14 @@
      * Rho - ugao u odnosu na pozitivan deo z-ose
      * 
      * **/
-    double camR;                
-    double camTheta;
-    double camRho;
+     double camR;                
+     double camTheta;
+     double camRho;
     //Ogranicenja sfernih koordinata
-    double Rlimit[2];
-    double RhoLimit[2];
-    double Slimit[2];
-    double deltaTheta;          
+     double Rlimit[2];
+     double RhoLimit[2];
+     double Slimit[2];
+     double deltaTheta;          
 
 
     /**
@@ -80,42 +80,42 @@
      * Ivice stola, koristi se u detekciji kolizija
      * 
      * **/
-    double tableLength;         
-    double tableWidth;
-    double tableEdgeUp;
-    double tableEdgeDown;
-    double tableEdgeLeft;
-    double tableEdgeRight;
+     double tableLength;         
+     double tableWidth;
+     double tableEdgeUp;
+     double tableEdgeDown;
+     double tableEdgeLeft;
+     double tableEdgeRight;
 
 
-    double ambientWidth;
-    double ambientLength;
-    double ambientHeight;
+     double ambientWidth;
+     double ambientLength;
+     double ambientHeight;
     
     /**
      * Poluprecnik kugle i poluprecnik rupe
      * ballLim__ predstavljaju granice (gore dole levo desno) dokle kugla sme da ide
      * u principu ballLim__ = tableEdge__ - ballRadius
      * */
-    double ballRadius;     
-    double pocketRadius;
-    double ballLimUp, ballLimDown, ballLimLeft, ballLimRight;
+     double ballRadius;     
+     double pocketRadius;
+     double ballLimUp, ballLimDown, ballLimLeft, ballLimRight;
     /**
      * 
      * lookingFromXYZ - koordinate tacke iz koje se trenutno gleda
      * lookingAtXYZ - koordinate tacke u koju se gleda
      * **/
-    double lookingAtX;  
-    double lookingAtY;
-    double lookingAtZ;
+     double lookingAtX;  
+     double lookingAtY;
+     double lookingAtZ;
 
-    double lookingFromX;
-    double lookingFromY;
-    double lookingFromZ;
+     double lookingFromX;
+     double lookingFromY;
+     double lookingFromZ;
 
 
     //Predstavlja meru jacine udarca. Meri se u "poluprecnicima kugle"
-    double shotStrength;
+     double shotStrength;
 
     //inShotMode - rezim udarca, od njega zavisi pogled i mogucnost izvodjenja udarca
     bool inShotMode = false;
@@ -123,21 +123,21 @@
     bool fullScreen = true;
     bool controlLock = false;
 
-    double pillarConst1;
+     double pillarConst1;
 
-    double pillarConstA1;
-    double pillarConstA2;
-    double pillarConstB1;
-    double pillarConstB2;
+     double pillarConstA1;
+     double pillarConstA2;
+     double pillarConstB1;
+     double pillarConstB2;
 
-    double tableBasisScaleX;
-    double tableBasisScaleY;
-    double tableBasisScaleZ;
+     double tableBasisScaleX;
+     double tableBasisScaleY;
+     double tableBasisScaleZ;
 
-    double tableBasisShiftZ;
+     double tableBasisShiftZ;
 
 
-    double persp;
+     double persp;
     /**
      * 
      * Koristi se za proveru da li se bilo koja kugla trenutno krece da bi se znalo

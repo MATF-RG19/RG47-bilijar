@@ -1,11 +1,9 @@
 #include "Ball.h"
-#include "putils.h"
-#include <GL/glut.h>
-#include <bitset>
+
+
+
 
 using namespace std;
-
-double Ball::epsSpeedIntensity = 0;
 
 //Ovi makroi predstavljaju cistu ljudsku lenjost
 #define X (position.x)
@@ -29,14 +27,6 @@ Ball::Ball(Vec2 position, Vec2 velocity, double radius, GLfloat r, GLfloat g, GL
 
     bmaskTurnOn = 1 << (i);
     bmaskTurnOff = bmaskTurnOn ^ (-1);
-
-    if(epsSpeedIntensity == 0){
-        epsSpeedIntensity = radius/10;
-    }
-
-
-
-    
 }
 
 // === GETERI, SETERI I SL ===
