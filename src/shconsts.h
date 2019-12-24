@@ -40,6 +40,9 @@
     
     #define CLOTH_TEXTURE_PATH "cloth_text.bmp"
 
+    #define MODE_JUST_CHECKING (0)
+    #define MODE_REGULAR (1)
+
 
     #define CTL_MODE_REGULAR (0)
     #define CTL_MODE_PLACE_CUEBALL (1)
