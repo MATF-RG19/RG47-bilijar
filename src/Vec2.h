@@ -7,7 +7,7 @@ using namespace std;
  * Klasa koja predstavlja vektor u dve dimenzije.
  * Obezbedjuje osnovne operacije sa vektorima (sabiranje, oduzimanje, mnozenje skalarom, skalarni proizvod).
  * Kod operacija ciji je rezultat vektor date su dve verzije, verzija koja menja trenutni vektor i verzija koja vraca novi.
- * Npr .add(Vec2 v) dodaje v na postojeci vektor dok .r_add(Vec2 v) vraca novi vektor koji predstavlja zbir trenutnog vektora i vektora v.
+ * Npr .add(Vec2 v) dodaje v na pozivajuci vektor dok .r_add(Vec2 v) vraca novi vektor koji predstavlja zbir trenutnog vektora i vektora v.
  * */
 #ifndef VEC2_H
 #define VEC2_H

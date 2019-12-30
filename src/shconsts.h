@@ -37,11 +37,11 @@
     #define SEVENPIFOUR (5.49778714378)
 
     #define POCKET_TOLERANCE (2)
-    
-    #define CLOTH_TEXTURE_PATH "cloth_text.bmp"
 
     #define MODE_JUST_CHECKING (0)
-    #define MODE_REGULAR (1)
+    #define MODE_APPLY_CHANGES (1)
+
+    #define TEXTURE_PATH ("zeleno.bmp")
 
 
     #define CTL_MODE_REGULAR (0)
@@ -122,9 +122,14 @@
 
     //inShotMode - rezim udarca, od njega zavisi pogled i mogucnost izvodjenja udarca
     bool inShotMode = false;
+    //fineTune - rezim precizcnijeg ciljanja
     bool fineTune = false;
+    //fullScreen
     bool fullScreen = true;
+    //zakljucavanje kontrola
     bool controlLock = false;
+
+    bool textures = true;
 
      double pillarConst1;
 
@@ -170,7 +175,7 @@
     GLfloat pocket_specular_material[] = { 1, 1, 1, 1 };
     GLfloat pocket_shininess = 10;
 
-    //glColor3f(0.30859375,0.140625,0.0703125);
+    
     GLfloat base_ambient_material[] = { 0.30859375,0.140625,0.0703125,1 };
     GLfloat base_diffuse_material[] = { 0.30859375,0.140625,0.0703125, 1};
     GLfloat base_specular_material[] = {0.7, 0.5, 0.7, 1  };

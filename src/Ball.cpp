@@ -1,7 +1,8 @@
 #include "Ball.h"
 
-
-
+//Za metode cushionCollide i collideWith obezbedjeno je takodje i samo proveriti da li je doslo do neke kolizije a ne menjati nikakve vrednosti.
+#define JUST_CHECK (0)
+#define APPLY_CHANGES (1)
 
 using namespace std;
 
@@ -68,8 +69,6 @@ int Ball::getIdx(){
 }
 
 
-
-
 // === PAMETNE METODE ===
 void Ball::drawSelf(){
     //Prilikom crtanja lopte pretpostavljamo da je koordinati sistem vec transliran uvis.
@@ -96,16 +95,20 @@ void Ball::drawSelf(){
     glTranslated(-position.x, -position.y, 0);
 
 }
+
 void Ball::updateSelf(unsigned int * activity){
     double ckmag = this->velocity.squaredMag();
     if (ckmag == 0) {
         return;
     }
+    //Vektor brzine se dodaje na vektor pozicije
     this->position.add(this->velocity);
 
+    //Simulacija trenja, vektor sa istom pravcem i 99 % intenziteta originalnoh vektora
     this->velocity.mult(0.99);
     ckmag = this->velocity.mag();
-    //HACK: promeni donji this->velocity.squaredMag() u ckmag*0.99
+
+    //Posto teoretski intenzitet brzine moze da konvergira ka nuli koristim neku malu vrednost, u ovom slucaju 0.001 gde se podrazumeva da je kugla stala
     if (this->velocity.squaredMag() < 0.001){
         this->velocity.anull();
         *activity = *activity & bmaskTurnOff;
@@ -116,13 +119,15 @@ void Ball::updateSelf(unsigned int * activity){
     
     
 }
-bool Ball::collideWith(Ball & b){
+
+bool Ball::collideWith(Ball & b, int what){
     /**
      * Zasnovano na ideji elasticnih kolizija.
      * http://www.vobarian.com/collisions/2dcollisions2.pdf
      * **/
 
     //BOUNDING BOX TECHNIQUE
+    //Koristi se za brzu detekciju da do kolizije nije doslo
     double minx1, miny1, maxx1, maxy1;
     double minx2, miny2, maxx2, maxy2;
 
@@ -137,15 +142,14 @@ bool Ball::collideWith(Ball & b){
     maxy2 = b.position.y + b.radius;
     
     
-    //bool asd = true;
-    //cout << "(";
-    if (!(   maxx1 > minx2 && minx1 < maxx2 && maxy1 > miny2 && miny1 < maxy2        )){
+    //Uslovi kolizije
+    if (!(   maxx1 > minx2 && minx1 < maxx2 && maxy1 > miny2 && miny1 < maxy2)){
         return false;
     }
 
 
 
-    Vec2 NormalVector = this->position.r_sub(b.position); //NON - NORMALIZED VECTOR THAT CONNECTS THE TWO CENTERS
+    Vec2 NormalVector = this->position.r_sub(b.position); //Vektor koji povezuje centre kugli koje se sudaraju
     
     double ballRadius = b.radius;
     double NormalVectorMag = NormalVector.mag();
@@ -155,7 +159,9 @@ bool Ball::collideWith(Ball & b){
     }
 
 
-    
+    if(what == JUST_CHECK){
+        return true;
+    }
     
     if(NormalVectorMag < 2*ballRadius){
         //Lopte ulaze jedna u drugu, razdvajaju se da ne bi bilo glitchovanja
@@ -205,12 +211,17 @@ bool Ball::collideWith(Ball & b){
 
             
 }
-bool Ball::cushionCollide(double limUp, double limDown, double limLeft, double limRight){
-    
+
+bool Ball::cushionCollide(double limUp, double limDown, double limLeft, double limRight, int what){
+    //Sudara kuglu sa ivicom stola, menja vektor brzine kako treba    
     bool b1 = Y >= limUp;
     bool b2 = Y < limDown;
     bool b3 = X > limRight;
     bool b4 = X < limLeft;
+
+    if(what == JUST_CHECK){
+        return (b1 || b2 || b3 || b4);
+    }
 
     bool ret = false;
     if(b1){
@@ -240,6 +251,7 @@ bool Ball::cushionCollide(double limUp, double limDown, double limLeft, double l
 
 }   
 bool Ball::pocketCollide(double limUp, double limDown, double limLeft, double limRight, double pocketRadius){
+    //Proverava da li je lopta upala u rupu. Funkcija circleDrop se nalazi u putils.h/cpp
     //KOORDINATE RUPA SU
 
     //GORE LEVO: (limUp, limLeft)

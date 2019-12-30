@@ -13,11 +13,12 @@ using namespace std;
 double pistep = PI/20;
 double twopi = 2*PI;
 
-bool withinBounds(double * x, double * bounds){
-    /**
+/**
      * Malo cudnovata funkcija, za vrlo specificnu potrebu
      * Pravi onaj efekat 'treperenje' ukoliko korisnik proba da zumira ili da pomeri kameru uvis/dole previse.
-     * **/
+ * **/
+bool withinBounds(double * x, double * bounds){
+    
     if (*x <= bounds[0]){
         *x = bounds[0] + .02;
         return false;
@@ -28,9 +29,12 @@ bool withinBounds(double * x, double * bounds){
     }
     return true;
 }
+//Proverava da li je vrednost unutar svojih granica. bounds[0] je donja, bounds[1] je gornja
 bool withinBoundsSimple(double x, double * bounds){
     return (x >= bounds[0] && x <= bounds[1]);
+
 }
+//Cratnje kruga trigonometrijskom parametrizacijom
 void drawCircle(double radius){
     double t = 0;
     while(t < twopi){
@@ -43,29 +47,14 @@ void drawCircle(double radius){
     }
     glEnd();
 }
-
-void drawEllipse(double a, double b, double t_from, double t_to){
-    double deltaT = 0.2;
-    while(t_from < t_to){
-        glBegin(GL_TRIANGLE_STRIP);
-            glVertex2f(0, 0);
-            glVertex2f(a*cos(t_from), b*sin(t_from));
-            glVertex2f(a*cos(t_from + deltaT), b*sin(t_from + deltaT));
-        glEnd();
-        t_from += deltaT;
-    }
-}
+//Proverava da li se centar jednog kruga nalazi u centru drugog kruga
 bool circleDrop(double bigX, double bigY, double bigRadius, double smallX, double smallY){
     Vec2 distVec = Vec2(bigX - smallX, bigY - smallY);
     double nrm = distVec.mag();
-    //cout << "Distance from ball " << smallX << ", " << smallY << " and hole " << bigX << ", " << bigY << " is " << nrm << endl;
-
     return nrm <= bigRadius;
 }
+//Postavlja normale za cilindar
 inline void set_normal_and_vertex(float u, float v){
-    // pravilno bi bilo y = 0 za normalu,
-    // ovako je render lepsi
-
     glNormal3f(
             sin(v),
             cos(v),
@@ -77,7 +66,9 @@ inline void set_normal_and_vertex(float u, float v){
             u
         );
 }
+//Crta cilindar ili polucilindar
 void draw_cylinder(double height,  bool half){
+    
     float u, v;
 
     float lim = half?PI:twopi;
@@ -92,14 +83,12 @@ void draw_cylinder(double height,  bool half){
     }
 
 }
-
+//Crta deo cilindra od ugla angleStart do angleEnd
 void draw_cylinder2(double height, double angleStart, double angleEnd, bool half){
+    
     float u, v;
 
     float lim = half?PI:twopi;
-
-    /* Crtamo objekat strip po strip */
-    // TODO: Ovako je ispravno :)
     for (u = 0; u < height; u +=pistep) {
         glBegin(GL_TRIANGLE_STRIP);
         for (v = angleStart; v <= angleEnd + EPSILON; v +=pistep) {

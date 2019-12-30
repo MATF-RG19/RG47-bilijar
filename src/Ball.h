@@ -10,8 +10,8 @@ using namespace std;
 #include "putils.h"
 
 
-#define NUM_SLICES (20)
-#define NUM_STACKS (20)
+#define NUM_SLICES (15)
+#define NUM_STACKS (15)
 class Ball{
 
     private:
@@ -41,7 +41,7 @@ class Ball{
         int idx;
         
 
-        pthread_mutex_t MYLOCK;
+
     public:
 
         // === KONSTRUKTORI ===
@@ -55,8 +55,6 @@ class Ball{
         
         Vec2 getVelocity();
         void setVelocity(Vec2);
-
-        bool isActive();
 
         bool getMoving();
         void setMoving(bool);
@@ -73,8 +71,8 @@ class Ball{
         // === PAMETNE METODE ===
         void drawSelf();
         void updateSelf(unsigned int *);
-        bool cushionCollide(double, double, double, double);
-        bool collideWith(Ball & b);
+        bool cushionCollide(double, double, double, double, int what);
+        bool collideWith(Ball & b, int what);
         bool pocketCollide(double limUp, double limDown, double limLeft, double limRight, double pocketRadius);
         
 

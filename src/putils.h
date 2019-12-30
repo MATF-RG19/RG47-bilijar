@@ -7,8 +7,6 @@ bool withinBounds(double *, double *);
 bool withinBoundsSimple(double x, double * bounds);
 //Crtanje kruga parametrizacijom
 void drawCircle(double);
-//Verovatno ce biti izbaceno
-void drawEllipse(double, double, double, double);
 //Proverava da li je jedan krug "unutar" drugog vise od pola (otprilike)
 bool circleDrop(double bigX, double bigY, double bigRadius, double smallX, double smallY);
 //Pomocna za crtanje cilindra
