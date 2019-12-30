@@ -19,6 +19,8 @@
 | **X**   | Rezim udarca        |
 | **F**   | "Fine tune" rezim        |
 | **H**   | Udarac        |
+| **P**   | Ukljucivanje/iskljucivanje fullscreen-a        |
+| **Enter / L**   | Spustanje bele kugle prilikom njenog rucnog postavljanja       |
 
 
 <hr>
